@@ -3,19 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import {
-  Plus,
-  Loader2,
-  Trash2,
-  Eye,
-  EyeOff,
-  Newspaper,
-  ExternalLink,
-  RotateCw,
-  Radio,
-  CheckCircle2,
-  FileText,
-} from "lucide-react";
+import { Plus, Loader2, Trash2, Eye, EyeOff, Newspaper, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,429 +28,151 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { relativeTimeAr } from "@/lib/constants";
 import { createPost, deletePost, togglePostPublished } from "@/actions/posts";
-import { createOfficialUpdate, deleteOfficialUpdate } from "@/actions/official-updates";
 import type { Database } from "@/types/database";
 
 type Post = Database["public"]["Tables"]["posts"]["Row"];
-type OfficialUpdate = Database["public"]["Tables"]["official_updates"]["Row"];
 
-export function NewsManager({
-  posts,
-  officialUpdates,
-}: {
-  posts: Post[];
-  officialUpdates: OfficialUpdate[];
-}) {
-  // Post modal state
-  const [openPostModal, setOpenPostModal] = useState(false);
-  const [postTitle, setPostTitle] = useState("");
-  const [postExcerpt, setPostExcerpt] = useState("");
-  const [postBody, setPostBody] = useState("");
-  const [postPublish, setPostPublish] = useState(true);
-  const [submittingPost, setSubmittingPost] = useState(false);
-  const [pendingDeletePost, setPendingDeletePost] = useState<Post | null>(null);
-
-  // Official update modal state
-  const [openOfficialModal, setOpenOfficialModal] = useState(false);
-  const [officialTitle, setOfficialTitle] = useState("");
-  const [officialBody, setOfficialBody] = useState("");
-  const [officialSource, setOfficialSource] = useState("مديرية الحماية المدنية لولاية جيجل");
-  const [officialUrl, setOfficialUrl] = useState("");
-  const [officialType, setOfficialType] = useState("fire_alert");
-  const [submittingOfficial, setSubmittingOfficial] = useState(false);
-  const [pendingDeleteOfficial, setPendingDeleteOfficial] = useState<OfficialUpdate | null>(null);
-
-  // Sync state
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
+export function NewsManager({ posts }: { posts: Post[] }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [body, setBody] = useState("");
+  const [publish, setPublish] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Post | null>(null);
   const [, startTransition] = useTransition();
 
-  async function submitPost() {
-    setSubmittingPost(true);
-    const res = await createPost({
-      title: postTitle,
-      excerpt: postExcerpt,
-      body: postBody,
-      is_published: postPublish,
-    });
-    setSubmittingPost(false);
+  async function submit() {
+    setSubmitting(true);
+    const res = await createPost({ title, excerpt, body, is_published: publish });
+    setSubmitting(false);
     if (!res.success) {
       toast.error(res.error ?? "حدث خطأ");
       return;
     }
-    toast.success(postPublish ? "تم نشر الخبر" : "تم حفظ المسودة");
-    setPostTitle("");
-    setPostExcerpt("");
-    setPostBody("");
-    setPostPublish(true);
-    setOpenPostModal(false);
-  }
-
-  async function submitOfficialUpdate() {
-    if (!officialTitle.trim()) {
-      toast.error("عنوان البيان مطلوب");
-      return;
-    }
-    setSubmittingOfficial(true);
-    const res = await createOfficialUpdate({
-      title: officialTitle,
-      body: officialBody,
-      source: officialSource,
-      url: officialUrl,
-      update_type: officialType,
-    });
-    setSubmittingOfficial(false);
-    if (!res.success) {
-      toast.error(res.error ?? "حدث خطأ");
-      return;
-    }
-    toast.success("تم نشر البيان الرسمي بنجاح");
-    setOfficialTitle("");
-    setOfficialBody("");
-    setOfficialUrl("");
-    setOpenOfficialModal(false);
-  }
-
-  async function triggerOfficialSync() {
-    setSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await fetch("/api/news/sync", { method: "POST" });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(`تمت مزامنة ${data.syncedCount} بيان وبلاغ رسمي بنجاح`);
-        setSyncResult(
-          `آخر مزامنة ناجحة: ${new Date().toLocaleTimeString("ar-DZ")} (${data.syncedCount} بلاغ تم التحقق منه)`
-        );
-      } else {
-        toast.error(data.error ?? "فشلت المزامنة");
-      }
-    } catch {
-      toast.error("تعذر الاتصال بخدمة المزامنة");
-    } finally {
-      setSyncing(false);
-    }
+    toast.success(publish ? "تم نشر الخبر" : "تم حفظ المسودة");
+    setTitle(""); setExcerpt(""); setBody(""); setPublish(true);
+    setOpen(false);
   }
 
   return (
-    <div className="space-y-10">
-      {/* 1. Official Live Ingestion & Manual Updates Header */}
-      <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/50">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-algeria-green/30 bg-algeria-green/10 px-3 py-0.5 text-xs font-bold text-algeria-green mb-1.5">
-              <Radio className="size-3.5 animate-pulse" />
-              <span>البيانات والمستجدات الموثقة (Official Bulletins)</span>
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger render={<Button size="sm"><Plus className="size-4" /> خبر جديد</Button>} />
+          <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>نشر خبر جديد</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-1.5">العنوان</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} />
+              </div>
+              <div>
+                <Label className="mb-1.5">مقدمة قصيرة (اختياري)</Label>
+                <Textarea
+                  value={excerpt}
+                  onChange={(e) => setExcerpt(e.target.value)}
+                  maxLength={400}
+                  rows={2}
+                />
+              </div>
+              <div>
+                <Label className="mb-1.5">نص الخبر</Label>
+                <Textarea
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  rows={9}
+                  placeholder="اترك سطرًا فارغًا بين كل فقرة وأخرى."
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={publish} onCheckedChange={(v) => setPublish(Boolean(v))} />
+                نشر مباشرة (أزل التحديد لحفظه كمسودة)
+              </label>
+              <DialogFooter>
+                <Button onClick={() => void submit()} disabled={submitting} className="w-full">
+                  {submitting && <Loader2 className="size-4 animate-spin" />}
+                  {publish ? "نشر" : "حفظ كمسودة"}
+                </Button>
+              </DialogFooter>
             </div>
-            <h2 className="text-xl font-bold">إدارة البيانات الرسمية</h2>
-            <p className="text-xs text-muted-foreground">
-              يمكنك سحب البيانات تلقائياً عبر المزامنة أو إضافة بيان رسمي يدوي لمصالح الحماية والغابات والدرك.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              onClick={() => void triggerOfficialSync()}
-              disabled={syncing}
-              variant="outline"
-              className="font-bold border-algeria-green/40 text-algeria-green hover:bg-algeria-green/10"
-            >
-              <RotateCw className={`size-4 ${syncing ? "animate-spin" : ""}`} />
-              <span>{syncing ? "جارٍ المزامنة..." : "مزامنة المصادر الآن"}</span>
-            </Button>
-
-            <Dialog open={openOfficialModal} onOpenChange={setOpenOfficialModal}>
-              <DialogTrigger render={<Button className="bg-algeria-green hover:bg-algeria-green/90 text-white font-bold"><Plus className="size-4" /> إضافة بيان رسمي</Button>} />
-              <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>نشر بيان رسمي موثق</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="mb-1.5">عنوان البيان / البلاغ</Label>
-                    <Input
-                      value={officialTitle}
-                      onChange={(e) => setOfficialTitle(e.target.value)}
-                      placeholder="مثال: الحماية المدنية: السيطرة على بؤرة غابة العوانة..."
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="mb-1.5">الجهة المصدرة</Label>
-                      <Select
-                        value={officialSource}
-                        onValueChange={(v: string | null) => v && setOfficialSource(v)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="اختر المصدر" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="مديرية الحماية المدنية لولاية جيجل">الحماية المدنية - جيجل</SelectItem>
-                          <SelectItem value="طريقي - الدرك الوطني">طريقي - الدرك الوطني</SelectItem>
-                          <SelectItem value="المديرية العامة للغابات">المديرية العامة للغابات</SelectItem>
-                          <SelectItem value="الديوان الوطني للأرصاد الجوية">الأرصاد الجوية</SelectItem>
-                          <SelectItem value="خلية الأزمة الولائية">خلية الأزمة الولائية</SelectItem>
-                          <SelectItem value="المديرية العامة للأمن الوطني">الأمن الوطني</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="mb-1.5">نوع البلاغ</Label>
-                      <Select
-                        value={officialType}
-                        onValueChange={(v: string | null) => v && setOfficialType(v)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="النوع" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="fire_alert">بلاغ حرائق وإخماد</SelectItem>
-                          <SelectItem value="road_status">حالة الطرقات والمعابر</SelectItem>
-                          <SelectItem value="weather_warning">إنذار جوي ونشرية</SelectItem>
-                          <SelectItem value="safety_guidelines">توجيهات السلامة والإجلاء</SelectItem>
-                          <SelectItem value="statement">بيان رسمي موثّق</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="mb-1.5">رابط المنشور الأصلي (اختياري)</Label>
-                    <Input
-                      dir="ltr"
-                      value={officialUrl}
-                      onChange={(e) => setOfficialUrl(e.target.value)}
-                      placeholder="https://facebook.com/..."
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="mb-1.5">نص وتفاصيل البيان</Label>
-                    <Textarea
-                      value={officialBody}
-                      onChange={(e) => setOfficialBody(e.target.value)}
-                      rows={5}
-                      placeholder="نص البلاغ الرسمي بالتفصيل..."
-                    />
-                  </div>
-
-                  <DialogFooter>
-                    <Button
-                      onClick={() => void submitOfficialUpdate()}
-                      disabled={submittingOfficial}
-                      className="w-full bg-algeria-green hover:bg-algeria-green/90 text-white font-bold"
-                    >
-                      {submittingOfficial && <Loader2 className="size-4 animate-spin" />}
-                      نشر البيان الرسمي
-                    </Button>
-                  </DialogFooter>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        {syncResult && (
-          <div className="flex items-center gap-2 rounded-lg bg-algeria-green/10 p-2.5 text-xs font-semibold text-algeria-green">
-            <CheckCircle2 className="size-4 shrink-0" />
-            <span>{syncResult}</span>
-          </div>
-        )}
-
-        {/* Official Bulletins List */}
-        <div>
-          <h3 className="text-sm font-bold text-muted-foreground mb-3">
-            البيانات المنشورة حالياً في قسم المعلومات الرسمية ({officialUpdates.length}):
-          </h3>
-
-          {officialUpdates.length === 0 ? (
-            <EmptyState
-              icon={FileText}
-              title="لا توجد بيانات رسمية مسجلة بعد"
-              description="استخدم زر مزامنة المصادر أو أضف بياناً يدوياً لنشره للعامة."
-            />
-          ) : (
-            <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-              {officialUpdates.map((u) => (
-                <Card key={u.id} className="py-3">
-                  <CardContent className="flex flex-wrap items-center justify-between gap-3 px-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="rounded-full bg-algeria-green/10 px-2 py-0.5 text-[10px] font-bold text-algeria-green border border-algeria-green/20">
-                          {u.source}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground">
-                          {relativeTimeAr(u.published_at)}
-                        </span>
-                      </div>
-                      <p className="font-bold text-sm leading-snug line-clamp-1">{u.title}</p>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {u.url && (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          render={<a href={u.url} target="_blank" rel="noopener noreferrer" />}
-                          title="عرض الرابط الأصلي"
-                        >
-                          <ExternalLink className="size-3.5" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="حذف"
-                        onClick={() => setPendingDeleteOfficial(u)}
-                        className="text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* 2. Field Posts Management Section */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-          <div>
-            <h2 className="text-xl font-bold">منشورات وتقارير الميدان</h2>
-            <p className="text-xs text-muted-foreground">
-              مقالات وتقارير تفصيلية ينشرها فريق التنسيق للمنصة.
-            </p>
-          </div>
-
-          <Dialog open={openPostModal} onOpenChange={setOpenPostModal}>
-            <DialogTrigger render={<Button size="sm"><Plus className="size-4" /> خبر جديد</Button>} />
-            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>نشر خبر جديد</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label className="mb-1.5">العنوان</Label>
-                  <Input value={postTitle} onChange={(e) => setPostTitle(e.target.value)} maxLength={200} />
+      {posts.length === 0 ? (
+        <EmptyState icon={Newspaper} title="لا توجد أخبار بعد" description="انشر أول خبر للمنصة." />
+      ) : (
+        <div className="space-y-2">
+          {posts.map((p) => (
+            <Card key={p.id} className={p.is_published ? "" : "opacity-70"}>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 px-5">
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold leading-tight">{p.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {p.is_published ? "منشور" : "مسودة"}
+                    {p.published_at ? ` · ${relativeTimeAr(p.published_at)}` : ""}
+                    {p.author_name ? ` · ${p.author_name}` : ""}
+                  </p>
                 </div>
-                <div>
-                  <Label className="mb-1.5">مقدمة قصيرة (اختياري)</Label>
-                  <Textarea
-                    value={postExcerpt}
-                    onChange={(e) => setPostExcerpt(e.target.value)}
-                    maxLength={400}
-                    rows={2}
-                  />
-                </div>
-                <div>
-                  <Label className="mb-1.5">نص الخبر</Label>
-                  <Textarea
-                    value={postBody}
-                    onChange={(e) => setPostBody(e.target.value)}
-                    rows={9}
-                    placeholder="اترك سطرًا فارغًا بين كل فقرة وأخرى."
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={postPublish} onCheckedChange={(v) => setPostPublish(Boolean(v))} />
-                  نشر مباشرة (أزل التحديد لحفظه كمسودة)
-                </label>
-                <DialogFooter>
-                  <Button onClick={() => void submitPost()} disabled={submittingPost} className="w-full">
-                    {submittingPost && <Loader2 className="size-4 animate-spin" />}
-                    {postPublish ? "نشر" : "حفظ كمسودة"}
-                  </Button>
-                </DialogFooter>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {posts.length === 0 ? (
-          <EmptyState icon={Newspaper} title="لا توجد أخبار بعد" description="انشر أول خبر للمنصة." />
-        ) : (
-          <div className="space-y-2.5">
-            {posts.map((p) => (
-              <Card key={p.id} className={p.is_published ? "" : "opacity-70"}>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 px-5">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold leading-tight">{p.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.is_published ? "منشور" : "مسودة"}
-                      {p.published_at ? ` · ${relativeTimeAr(p.published_at)}` : ""}
-                      {p.author_name ? ` · ${p.author_name}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {p.is_published && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="عرض"
-                        render={<Link href={`/news/${p.slug}`} target="_blank" />}
-                      >
-                        <ExternalLink className="size-4" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      aria-label={p.is_published ? "إلغاء النشر" : "نشر"}
-                      onClick={() =>
-                        startTransition(async () => {
-                          const res = await togglePostPublished(p.id, !p.is_published);
-                          if (!res.success) toast.error(res.error ?? "حدث خطأ");
-                        })
-                      }
-                    >
-                      {p.is_published ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                    </Button>
+                <div className="flex items-center gap-1">
+                  {p.is_published && (
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label="حذف"
-                      onClick={() => setPendingDeletePost(p)}
+                      aria-label="عرض"
+                      render={<Link href={`/news/${p.slug}`} target="_blank" />}
                     >
-                      <Trash2 className="size-4 text-destructive" />
+                      <ExternalLink className="size-4" />
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={p.is_published ? "إلغاء النشر" : "نشر"}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const res = await togglePostPublished(p.id, !p.is_published);
+                        if (!res.success) toast.error(res.error ?? "حدث خطأ");
+                      })
+                    }
+                  >
+                    {p.is_published ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="حذف"
+                    onClick={() => setPendingDelete(p)}
+                  >
+                    <Trash2 className="size-4 text-destructive" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {/* Delete Post Dialog */}
-      <AlertDialog open={!!pendingDeletePost} onOpenChange={(v) => !v && setPendingDeletePost(null)}>
+      <AlertDialog open={!!pendingDelete} onOpenChange={(v) => !v && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>حذف الخبر؟</AlertDialogTitle>
             <AlertDialogDescription>
-              سيُحذف &quot;{pendingDeletePost?.title}&quot; نهائيًا. لا يمكن التراجع.
+              سيُحذف &quot;{pendingDelete?.title}&quot; نهائيًا. لا يمكن التراجع.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                const target = pendingDeletePost;
-                setPendingDeletePost(null);
+                const target = pendingDelete;
+                setPendingDelete(null);
                 if (!target) return;
                 startTransition(async () => {
                   const res = await deletePost(target.id);
@@ -472,38 +182,6 @@ export function NewsManager({
               }}
             >
               حذف
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete Official Update Dialog */}
-      <AlertDialog
-        open={!!pendingDeleteOfficial}
-        onOpenChange={(v) => !v && setPendingDeleteOfficial(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>حذف البيان الرسمي؟</AlertDialogTitle>
-            <AlertDialogDescription>
-              سيُحذف &quot;{pendingDeleteOfficial?.title}&quot; نهائيًا من قائمة المعلومات الرسمية.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                const target = pendingDeleteOfficial;
-                setPendingDeleteOfficial(null);
-                if (!target) return;
-                startTransition(async () => {
-                  const res = await deleteOfficialUpdate(target.id);
-                  if (!res.success) toast.error(res.error ?? "حدث خطأ");
-                  else toast.success("تم حذف البيان الرسمي");
-                });
-              }}
-            >
-              حذف نهائي
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

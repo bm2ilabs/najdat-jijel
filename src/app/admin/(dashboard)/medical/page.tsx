@@ -12,13 +12,13 @@ const statusOrder = { pending: 0, verified: 1, rejected: 2 };
 
 export default async function AdminMedicalPage() {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from("medical_volunteers")
     .select("*")
     .order("created_at", { ascending: false });
 
-  const rows = (data ?? []).slice().sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
+  const rows: any[] = ((data ?? []) as any[]).slice().sort((a: any, b: any) => ((statusOrder as any)[a.status] ?? 0) - ((statusOrder as any)[b.status] ?? 0));
+  const pendingCount = rows.filter((r: any) => r.status === "pending").length;
 
   return (
     <div className="space-y-6">

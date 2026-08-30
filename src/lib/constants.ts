@@ -32,7 +32,6 @@ export type VehicleType = Database["public"]["Enums"]["vehicle_type"];
 export type DonationStatus = Database["public"]["Enums"]["donation_status"];
 export type NeedStatus = Database["public"]["Enums"]["need_status"];
 export type AffectedSeverity = Database["public"]["Enums"]["affected_severity"];
-export type MedicalVerificationStatus = Database["public"]["Enums"]["medical_verification_status"];
 
 export const priorityLabels: Record<PriorityLevel, string> = {
   critical: "حرج",
@@ -56,6 +55,13 @@ export const priorityIcon: Record<PriorityLevel, LucideIcon> = {
   high: Circle,
   medium: Circle,
   low: Circle,
+};
+
+export const priorityEmoji: Record<PriorityLevel, string> = {
+  critical: "🔴",
+  high: "🟠",
+  medium: "🟡",
+  low: "🟢",
 };
 
 export const verificationLabels: Record<VerificationLevel, string> = {
@@ -93,6 +99,13 @@ export const verificationIcon: Record<VerificationLevel, LucideIcon> = {
   pending: Circle,
   verified: Circle,
   field_verified: Circle,
+};
+
+export const verificationEmoji: Record<VerificationLevel, string> = {
+  unverified: "⚪",
+  pending: "🟡",
+  verified: "🟢",
+  field_verified: "🔵",
 };
 
 export const requestStatusLabels: Record<RequestStatus, string> = {
@@ -321,6 +334,27 @@ export const categoryIcon: Record<string, LucideIcon> = {
   other: Tag,
 };
 
+export const categoryEmoji: Record<string, string> = {
+  water: "💧",
+  food: "🍚",
+  food_baskets: "🍲",
+  clothing: "👕",
+  blankets: "🛏️",
+  blankets_mattresses: "🛏️",
+  baby_supplies: "🍼",
+  hygiene: "🧼",
+  medical: "💊",
+  medicines_first_aid: "💊",
+  kitchenware: "🍳",
+  cooking_supplies: "🍳",
+  relief_materials: "📦",
+  shelter: "⛺",
+  construction_materials: "🧱",
+  cooking_gas: "🛢️",
+  manpower: "👷",
+  other: "🔖",
+};
+
 export const categoryNamesFr: Record<string, string> = {
   water: "Eau potable",
   food: "Denrées alimentaires",
@@ -429,6 +463,14 @@ export const severityIcon: Record<AffectedSeverity, LucideIcon> = {
   unconfirmed: Circle,
 };
 
+export const severityEmoji: Record<AffectedSeverity, string> = {
+  ravaged: "🔴",
+  evacuated: "🟠",
+  threatened: "🟡",
+  burning: "🔥",
+  unconfirmed: "⚪",
+};
+
 /** ترتيب العرض: الأخطر أولًا، والبلاغات غير المؤكدة في الأخير. */
 export const severityRank: Record<AffectedSeverity, number> = {
   ravaged: 0,
@@ -437,6 +479,8 @@ export const severityRank: Record<AffectedSeverity, number> = {
   burning: 3,
   unconfirmed: 4,
 };
+
+export type MedicalVerificationStatus = Database["public"]["Enums"]["medical_verification_status"];
 
 export const medicalVerificationStatusLabels: Record<MedicalVerificationStatus, string> = {
   pending: "قيد التحقق",

@@ -1,48 +1,52 @@
-// سكربت لإنشاء أول حساب أدمن في المنصة.
-// الاستخدام:
-//   node scripts/create-admin.mjs admin@example.com "كلمة-مرور-قوية" "اسم المسؤول"
-//
-// يتطلب أن يكون NEXT_PUBLIC_SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY مضبوطين في .env.local
-
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function loadEnvLocal() {
-  try {
-    const content = readFileSync(join(__dirname, "..", ".env.local"), "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eqIndex = trimmed.indexOf("=");
-      if (eqIndex === -1) continue;
-      const key = trimmed.slice(0, eqIndex).trim();
-      let value = trimmed.slice(eqIndex + 1).trim();
-      if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
-      if (!process.env[key]) process.env[key] = value;
-    }
-  } catch {
-    // .env.local غير موجود؛ يُفترض أن المتغيرات مضبوطة في البيئة مسبقًا
+// Load .env.local if present
+function loadEnv() {
+  const envPath = resolve(process.cwd(), ".env.local");
+  if (existsSync(envPath)) {
+    const content = readFileSync(envPath, "utf-8");
+    content.split("\n").forEach((line) => {
+      const match = line.match(/^\s*([\w_]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        let val = (match[2] || "").trim();
+        if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+        if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    });
   }
 }
 
-loadEnvLocal();
-
-const [, , email, password, fullName] = process.argv;
-
-if (!email || !password) {
-  console.error('الاستخدام: node scripts/create-admin.mjs <email> <password> ["الاسم الكامل"]');
-  process.exit(1);
-}
+loadEnv();
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!url || !serviceKey) {
-  console.error("يجب ضبط NEXT_PUBLIC_SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY في .env.local");
+const [email, password, fullName] = process.argv.slice(2);
+
+if (!email || !password) {
+  console.log(`
+الاستخدام:
+  node scripts/create-admin.mjs <email> <password> [fullName]
+
+مثال:
+  node scripts/create-admin.mjs admin@jijel.dz "Admin@123456" "مشرف العمليات"
+`);
+  process.exit(1);
+}
+
+if (!url || !serviceKey || url.includes("your-project-ref")) {
+  console.error(`
+[خطأ]: لم يتم ضبط مفاتيح Supabase في ملف .env.local!
+يرجى التأكد من وضع:
+  NEXT_PUBLIC_SUPABASE_URL
+  SUPABASE_SERVICE_ROLE_KEY
+`);
   process.exit(1);
 }
 
@@ -50,28 +54,65 @@ const supabase = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const { data: created, error: createError } = await supabase.auth.admin.createUser({
-  email,
-  password,
-  email_confirm: true,
-  user_metadata: { full_name: fullName ?? null, role: "admin" },
-});
+async function main() {
+  console.log(`جارٍ إنشاء حساب الأدمن: ${email} ...`);
 
-if (createError) {
-  console.error("فشل إنشاء المستخدم:", createError.message);
-  process.exit(1);
+  // 1. Create or get user
+  const { data: userRecord, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName || "مشرف المنصة" },
+  });
+
+  let userId = userRecord?.user?.id;
+
+  if (authError) {
+    if (authError.message.includes("already registered") || authError.message.includes("already exists")) {
+      console.log("الحساب مسجّل مسبقًا في Auth، جاري تحديث كلمة المرور والدور إلى أدمن...");
+      const { data: usersList } = await supabase.auth.admin.listUsers();
+      const existing = usersList?.users?.find((u) => u.email === email);
+      if (existing) {
+        userId = existing.id;
+        await supabase.auth.admin.updateUserById(userId, {
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: fullName || "مشرف المنصة" },
+        });
+      } else {
+        console.error("تعذر العثور على الحساب لتحديثه:", authError.message);
+        process.exit(1);
+      }
+    } else {
+      console.error("خطأ أثناء إنشاء الحساب:", authError.message);
+      process.exit(1);
+    }
+  }
+
+  // 2. Set profile role to 'admin'
+  const { error: profileError } = await supabase.from("profiles").upsert({
+    id: userId,
+    role: "admin",
+    full_name: fullName || "مشرف المنصة",
+    updated_at: new Date().toISOString(),
+  });
+
+  if (profileError) {
+    console.error("خطأ في تحديث جدول profiles:", profileError.message);
+    process.exit(1);
+  }
+
+  console.log(`
+=========================================
+  تم إنشاء / ترقية حساب الأدمن بنجاح!
+=========================================
+  البريد الإلكتروني: ${email}
+  كلمة المرور:        ${password}
+  الاسم:              ${fullName || "مشرف المنصة"}
+  الدور:              admin
+=========================================
+يمكنك الآن التوجه إلى /admin/login وتسجيل الدخول.
+`);
 }
 
-const userId = created.user.id;
-
-const { error: updateError } = await supabase
-  .from("profiles")
-  .update({ role: "admin", full_name: fullName ?? null })
-  .eq("id", userId);
-
-if (updateError) {
-  console.error("تم إنشاء المستخدم لكن فشل تحديث الدور:", updateError.message);
-  process.exit(1);
-}
-
-console.log(`تم إنشاء حساب الأدمن بنجاح: ${email}`);
+main();

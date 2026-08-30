@@ -216,7 +216,7 @@ export async function getPostBySlug(slug: string) {
 export async function getPublicMedicalVolunteers() {
   try {
     const supabase = await createClient();
-    const { data } = await supabase.rpc("get_public_medical_volunteers");
+    const { data } = await (supabase as any).rpc("get_public_medical_volunteers");
     return data ?? [];
   } catch {
     return [];

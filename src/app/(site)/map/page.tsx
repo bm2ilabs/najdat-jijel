@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/components/shared/empty-state";
-import { PointCard, type PointCardData } from "@/components/shared/point-card";
+import type { PointCardData } from "@/components/shared/point-card";
 import { getPublicCollectionPoints, getPublicReliefHubs } from "@/lib/data/public";
 import { MapClient } from "./map-client";
-import { MapLegend } from "./map-legend";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getLocale } from "@/i18n/server";
+import { MapPin, ShieldCheck, HeartHandshake } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -63,65 +63,46 @@ export default async function MapPage() {
     })),
   ];
 
-  const shelters = points.filter((p) => p.kind === "shelter").length;
-  const hubs = points.filter((p) => p.kind === "relief_hub").length;
-  const collect = points.filter((p) => p.kind === "collection_point").length;
-
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6 text-center">
-        <h1 className="text-3xl font-extrabold">{t.map.pageTitle}</h1>
-        <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
-          {t.map.pageSubtitle}
-        </p>
-      </div>
-
-      <div className="mb-4 grid grid-cols-3 gap-2 sm:max-w-md sm:mx-auto">
-        <Card className="py-3">
-          <CardContent className="px-3 text-center">
-            <p className="text-xl font-bold tabular-nums text-[#00843D]">{collect}</p>
-            <p className="text-xs font-medium text-muted-foreground">{t.map.legendCollection}</p>
-          </CardContent>
-        </Card>
-        <Card className="py-3">
-          <CardContent className="px-3 text-center">
-            <p className="text-xl font-bold tabular-nums text-[#1d4ed8]">{hubs}</p>
-            <p className="text-xs font-medium text-muted-foreground">{t.map.legendRelief}</p>
-          </CardContent>
-        </Card>
-        <Card className="py-3">
-          <CardContent className="px-3 text-center">
-            <p className="text-xl font-bold tabular-nums text-[#7c3aed]">{shelters}</p>
-            <p className="text-xs font-medium text-muted-foreground">{t.map.legendShelter}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <MapLegend locale={locale} />
-
-      <div className="h-[420px] overflow-hidden rounded-xl border border-border sm:h-[520px]">
-        <MapClient points={points} locale={locale} />
-      </div>
-
-      <h2 className="mt-10 mb-4 text-xl font-bold">
-        {isFr ? `Tous les points (${points.length})` : `كل النقاط (${points.length})`}
-      </h2>
-      {points.length === 0 ? (
-        <EmptyState
-          title={isFr ? "Aucun point enregistré pour le moment" : "لا توجد نقاط مسجَّلة بعد"}
-          description={
-            isFr
-              ? "Les points de collecte et centres d'accueil apparaîtront ici dès leur validation."
-              : "سيتم عرض نقاط التجميع ومراكز الاستقبال هنا فور إضافتها من الإدارة."
-          }
-        />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {points.map((p) => (
-            <PointCard key={`${p.kind}-${p.id}`} point={p} locale={locale} />
-          ))}
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12 space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between border-b border-border/60 pb-6">
+        <div>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-algeria-green/10 px-3 py-1 text-xs font-bold text-algeria-green mb-2.5">
+            <MapPin className="size-3.5" />
+            <span>{isFr ? "Centres et points de secours vérifiés" : "المراكز ونقاط الإغاثة الميدانية الموثقة"}</span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">{t.map.pageTitle}</h1>
+          <p className="mt-2 max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed">
+            {t.map.pageSubtitle}
+          </p>
         </div>
-      )}
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Button
+            size="sm"
+            variant="outline"
+            render={<Link href="/donate" />}
+            className="rounded-xl font-bold gap-1.5"
+          >
+            <HeartHandshake className="size-4 text-algeria-green" />
+            <span>{isFr ? "Enregistrer un don" : "تسجيل مساعدات"}</span>
+          </Button>
+
+          <Button
+            size="sm"
+            render={<Link href="/help" />}
+            className="rounded-xl bg-algeria-green hover:bg-algeria-green/90 text-white font-bold gap-1.5 shadow-sm"
+          >
+            <ShieldCheck className="size-4" />
+            <span>{isFr ? "Demander de l'aide" : "طلب إغاثة"}</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Interactive Map & Feed Client */}
+      <MapClient points={points} locale={locale} />
     </div>
   );
 }
+

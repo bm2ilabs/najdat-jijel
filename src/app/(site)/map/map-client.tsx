@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { PointCard, type PointCardData } from "@/components/shared/point-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { campaignWilayas } from "@/config/site";
+import { WilayaSelect } from "@/components/ui/wilaya-select";
+import { priorityWilayas } from "@/lib/algeria-cities";
 import type { AvailableLocale } from "@/i18n/locales";
 import { cn } from "@/lib/utils";
 
@@ -240,20 +242,15 @@ export function MapClient({
             )}
           </div>
 
-          {/* Wilaya Filter Dropdown / Select */}
+          {/* Wilaya Filter Dropdown / Select with All 69 Wilayas */}
           <div className="flex flex-wrap items-center gap-2">
-            <select
+            <WilayaSelect
+              locale={locale}
+              includeAllOption={true}
               value={selectedWilaya}
               onChange={(e) => setSelectedWilaya(e.target.value)}
-              className="h-11 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-algeria-green cursor-pointer"
-            >
-              <option value="all">{isFr ? "Toutes les wilayas" : "كل الولايات"}</option>
-              {campaignWilayas.map((w) => (
-                <option key={w} value={w}>
-                  {isFr ? `Wilaya de ${w}` : `ولاية ${w}`}
-                </option>
-              ))}
-            </select>
+              className="w-auto min-w-[170px] cursor-pointer"
+            />
 
             {/* Status Filter */}
             <select
@@ -280,6 +277,35 @@ export function MapClient({
                 <span>{isFr ? "Réinitialiser" : "مسح الفلاتر"}</span>
               </Button>
             )}
+          </div>
+        </div>
+
+        {/* Priority Affected Wilayas Quick Chips Bar */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="text-xs font-bold text-priority-critical flex items-center gap-1">
+            <span className="inline-block size-2 rounded-full bg-priority-critical animate-pulse" />
+            {isFr ? "Zones sinistrées prioritaires :" : "الولايات المتضررة (أولوية الإغاثة) :"}
+          </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {priorityWilayas.map((pw) => {
+              const active = selectedWilaya === pw.name_ar;
+              return (
+                <button
+                  key={pw.code}
+                  type="button"
+                  onClick={() => setSelectedWilaya(active ? "all" : pw.name_ar)}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer border",
+                    active
+                      ? "bg-priority-critical text-white border-priority-critical shadow-sm scale-105"
+                      : "bg-priority-critical/10 text-priority-critical border-priority-critical/30 hover:bg-priority-critical/20 hover:border-priority-critical/50",
+                  )}
+                >
+                  <span>⚡</span>
+                  <span>{isFr ? `${pw.codeStr} - ${pw.name_fr}` : `${pw.codeStr} - ${pw.name_ar}`}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

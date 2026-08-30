@@ -20,7 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EmptyState } from "@/components/shared/empty-state";
 import { transportOfferSchema, vehicleOptions, type TransportOfferInput } from "@/schemas/transport-offer";
-import { wilayaNames } from "@/lib/wilayas";
+import { WilayaSelect } from "@/components/ui/wilaya-select";
 import { formatQuantity, getVehicleLabel } from "@/lib/constants";
 import { SuccessPanel } from "@/components/shared/success-panel";
 import { submitTransportOffer, type SubmitTransportResult } from "@/actions/transport";
@@ -152,45 +152,28 @@ export function TransportForm({
         <CardContent className="space-y-4 px-5">
           <h2 className="font-bold">{isFr ? "Itinéraire et véhicule" : "المسار والمركبة"}</h2>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label className="mb-1.5">{isFr ? "Point de départ" : "نقطة الانطلاق"}</Label>
-              <Select
+              <Label className="mb-1.5">{isFr ? "Point de départ (Wilaya)" : "نقطة الانطلاق (الولاية)"}</Label>
+              <WilayaSelect
+                locale={locale}
                 value={watch("origin_wilaya")}
-                onValueChange={(v: string | null) => v && setValue("origin_wilaya", v)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={isFr ? "Wilaya" : "الولاية"} />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {wilayaNames.map((w) => (
-                    <SelectItem key={w} value={w}>
-                      {w}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => setValue("origin_wilaya", e.target.value, { shouldValidate: true })}
+              />
               {errors.origin_wilaya && (
                 <p className="mt-1 text-sm text-destructive">{errors.origin_wilaya.message}</p>
               )}
             </div>
             <div>
-              <Label className="mb-1.5">{isFr ? "Destination" : "الوجهة"}</Label>
-              <Select
+              <Label className="mb-1.5">{isFr ? "Destination (Wilaya)" : "الوجهة (الولاية)"}</Label>
+              <WilayaSelect
+                locale={locale}
                 value={watch("destination_wilaya")}
-                onValueChange={(v: string | null) => v && setValue("destination_wilaya", v)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={isFr ? "Wilaya" : "الولاية"} />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {wilayaNames.map((w) => (
-                    <SelectItem key={w} value={w}>
-                      {w}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => setValue("destination_wilaya", e.target.value, { shouldValidate: true })}
+              />
+              {errors.destination_wilaya && (
+                <p className="mt-1 text-sm text-destructive">{errors.destination_wilaya.message}</p>
+              )}
             </div>
           </div>
 

@@ -74,6 +74,7 @@ const groups: NavGroup[] = [
     title: "المتطوعون والتحقق",
     color: "emerald",
     items: [
+      { href: "/admin/volunteers", label: "المتطوعون الميدانيون", icon: Users },
       { href: "/admin/verification", label: "التحقق", icon: ShieldCheck },
       { href: "/admin/medical", label: "الأطقم الطبية", icon: Stethoscope },
       { href: "/admin/damage-assessments", label: "تقييمات الأضرار", icon: Hammer },

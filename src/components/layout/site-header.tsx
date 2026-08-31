@@ -13,6 +13,7 @@ export async function SiteHeader() {
 
   const navLinks = [
     { href: "/", label: t.nav.home },
+    { href: "/volunteers", label: t.nav.volunteers },
     { href: "/affected-areas", label: t.nav.affectedAreas },
     { href: "/medical", label: t.nav.medical },
     { href: "/map", label: t.nav.map },

@@ -1,0 +1,615 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Loader2,
+  PackageCheck,
+  Truck,
+  HeartHandshake,
+  Trash2,
+  Utensils,
+  Compass,
+  Activity,
+  Sparkles,
+  Car,
+  Bike,
+  Footprints,
+  Clock,
+  Calendar,
+  AlertTriangle,
+  Phone,
+  ShieldCheck,
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  fieldVolunteerSchema,
+  type FieldVolunteerInput,
+  fieldVolunteerSkills,
+  fieldVolunteerMobilityOptions,
+  fieldVolunteerAvailabilityOptions,
+  fieldVolunteerEquipmentOptions,
+} from "@/schemas/field-volunteer";
+import { submitFieldVolunteer } from "@/actions/volunteers";
+import {
+  fieldVolunteerSkillLabels,
+  fieldVolunteerMobilityLabels,
+  fieldVolunteerAvailabilityLabels,
+  fieldVolunteerEquipmentLabels,
+} from "@/lib/constants";
+import { WilayaSelect } from "@/components/ui/wilaya-select";
+import { CommuneSelect } from "@/components/ui/commune-select";
+import { priorityWilayas } from "@/lib/algeria-cities";
+import { LinkButton } from "@/components/shared/link-button";
+import type { AvailableLocale } from "@/i18n/locales";
+import { cn } from "@/lib/utils";
+
+interface FieldVolunteerFormProps {
+  locale?: AvailableLocale;
+  activePoints?: Array<{
+    id: string;
+    name: string;
+    commune: string;
+    wilaya: string;
+    phone?: string | null;
+    address?: string | null;
+    lat?: number | null;
+    lng?: number | null;
+  }>;
+}
+
+const skillIcons: Record<string, typeof PackageCheck> = {
+  sorting_packaging: PackageCheck,
+  loading_unloading: Truck,
+  distribution: HeartHandshake,
+  debris_clearing: Trash2,
+  cooking_prep: Utensils,
+  local_scouting: Compass,
+  first_aid: Activity,
+  general: Sparkles,
+};
+
+const mobilityIcons: Record<string, typeof Car> = {
+  has_4x4: Truck,
+  has_car: Car,
+  has_motorcycle: Bike,
+  needs_transport: Footprints,
+  none: Footprints,
+};
+
+export function FieldVolunteerForm({
+  locale = "ar",
+  activePoints = [],
+}: FieldVolunteerFormProps) {
+  const isFr = locale === "fr";
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FieldVolunteerInput>({
+    resolver: zodResolver(fieldVolunteerSchema),
+    defaultValues: {
+      full_name: "",
+      phone: "",
+      wilaya_code: "جيجل",
+      commune_id: "",
+      skills: ["sorting_packaging", "distribution"],
+      mobility: "has_car",
+      availability: "immediate",
+      equipment: [],
+      emergency_contact: "",
+      notes: "",
+      show_phone_publicly: false,
+    },
+  });
+
+  const selectedWilaya = watch("wilaya_code") || "جيجل";
+  const selectedCommune = watch("commune_id");
+  const selectedSkills = watch("skills") || [];
+  const selectedMobility = watch("mobility");
+  const selectedAvailability = watch("availability");
+  const selectedEquipment = watch("equipment") || [];
+  const showPhone = watch("show_phone_publicly");
+
+  function toggleSkill(skill: string) {
+    if (selectedSkills.includes(skill)) {
+      setValue(
+        "skills",
+        selectedSkills.filter((s) => s !== skill)
+      );
+    } else {
+      setValue("skills", [...selectedSkills, skill]);
+    }
+  }
+
+  function toggleEquipment(item: string) {
+    if (selectedEquipment.includes(item)) {
+      setValue(
+        "equipment",
+        selectedEquipment.filter((e) => e !== item)
+      );
+    } else {
+      setValue("equipment", [...selectedEquipment, item]);
+    }
+  }
+
+  async function onSubmit(values: FieldVolunteerInput) {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await submitFieldVolunteer(values);
+      if (!res.success) {
+        setSubmitError(
+          res.message ??
+            (isFr
+              ? "Une erreur est survenue lors de l'enregistrement."
+              : "حدث خطأ أثناء حفظ البيانات.")
+        );
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setSubmitError(
+        isFr
+          ? "Une erreur est survenue lors de l'enregistrement."
+          : "حدث خطأ أثناء حفظ البيانات."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (submitted) {
+    return (
+      <div className="space-y-6">
+        {/* Success Banner */}
+        <div className="flex flex-col items-center gap-3.5 rounded-3xl border border-algeria-green/30 bg-algeria-green/10 p-6 sm:p-10 text-center shadow-xs">
+          <span className="flex size-16 items-center justify-center rounded-2xl bg-algeria-green text-white shadow-md">
+            <HeartHandshake className="size-9" />
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+            {isFr
+              ? "Merci pour votre engagement solidaire !"
+              : "بارك الله في سواعدكم وجهودكم!"}
+          </h2>
+          <p className="max-w-xl text-xs sm:text-sm leading-relaxed text-muted-foreground">
+            {isFr
+              ? "Votre inscription a bien été prise en compte. Voici les consignes de sécurité essentielles et les points de coordination actifs où vous pouvez vous rendre :"
+              : "تم تسجيل استعدادكم بنجاح في قاعدة بيانات المتطوعين الميدانيين. إليكم إرشادات السلامة وأقرب مراكز التنسيق النشطة:"}
+          </p>
+
+          <div className="mt-3 flex flex-wrap justify-center gap-2.5">
+            <LinkButton href="/map" className="font-bold gap-1.5">
+              <MapPin className="size-4" />
+              <span>{isFr ? "Ouvrir la carte des secours" : "فتح خريطة المراكز الميدانية"}</span>
+            </LinkButton>
+            <LinkButton href="/" variant="outline" className="font-bold">
+              {isFr ? "Retour à l'accueil" : "الصفحة الرئيسية"}
+            </LinkButton>
+          </div>
+        </div>
+
+        {/* Safety First Notice Card */}
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="space-y-3 p-5 sm:p-6">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-extrabold text-sm sm:text-base">
+              <AlertTriangle className="size-5 shrink-0" />
+              <h3>{isFr ? "Consignes de sécurité prioritaires" : "تعليمات وإرشادات السلامة الميدانية الهامة"}</h3>
+            </div>
+            <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground list-disc list-inside leading-relaxed">
+              <li>
+                {isFr
+                  ? "Ne pénétrez jamais dans les zones de feu actif ou routes fermées sans autorisation expresse de la Protection Civile."
+                  : "لا تدخل إطلاقاً إلى مناطق الحرائق المشتعلة أو المسالك المغلقة إلا بمرافقة وتصريح مصالح الحماية المدنية."}
+              </li>
+              <li>
+                {isFr
+                  ? "Munissez-vous toujours d'eau potable en quantité suffisante, de masques anti-poussière et de chaussures de marche adaptées."
+                  : "تزوّد دائماً بكميات كافية من مياه الشرب، كمامات واقية من الدخان والغبار، وأحذية أمان مناسبة للتضاريس الجبلية."}
+              </li>
+              <li>
+                {isFr
+                  ? "Rapprochez-vous obligatoirement des responsables de centres pour coordonner les actions et éviter les doublons."
+                  : "تنسيق توزيع المساعدات يتم حصراً مع مسؤولي النقاط والمراكز المعتمدة لتفادي العشوائية وضمان وصول العون لمستحقيه."}
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        {/* Active Coordination Points */}
+        {activePoints.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
+              <MapPin className="size-5 text-algeria-green" />
+              <span>{isFr ? "Points de coordination et d'accueil actifs" : "مراكز التجميع والاستقبال المفتوحة"}</span>
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {activePoints.slice(0, 4).map((point) => (
+                <div
+                  key={point.id}
+                  className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-xs hover:border-algeria-green/40 transition-all"
+                >
+                  <div>
+                    <p className="font-bold text-sm sm:text-base text-foreground">{point.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <MapPin className="size-3.5 shrink-0" />
+                      <span>
+                        {point.commune}، {point.wilaya}
+                      </span>
+                    </p>
+                    {point.address && (
+                      <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+                        {point.address}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                    {point.phone && (
+                      <a
+                        href={`tel:${point.phone.replace(/\s/g, "")}`}
+                        dir="ltr"
+                        className="inline-flex items-center gap-1 rounded-lg bg-algeria-green/10 px-2.5 py-1 text-xs font-bold text-algeria-green hover:bg-algeria-green/20"
+                      >
+                        <Phone className="size-3" />
+                        <span>{point.phone}</span>
+                      </a>
+                    )}
+                    {point.lat && point.lng && (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${point.lat},${point.lng}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-foreground ms-auto"
+                      >
+                        <span>{isFr ? "Itinéraire" : "المسار GPS"}</span>
+                        <ExternalLink className="size-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* 1. Identity and Location */}
+      <Card>
+        <CardContent className="space-y-4 px-5 pt-6">
+          <div className="flex items-center gap-2 text-foreground font-bold">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-algeria-green/10 text-algeria-green text-sm font-extrabold">
+              1
+            </span>
+            <h2>{isFr ? "Informations personnelles & Localisation" : "بيانات المتطوع والموقع"}</h2>
+          </div>
+
+          <div>
+            <Label className="mb-1.5">{isFr ? "Nom et prénom *" : "الاسم واللقب *"}</Label>
+            <Input
+              placeholder={isFr ? "Ex : Abdelkader Boualem" : "مثال: عبد القادر بوعلام"}
+              {...register("full_name")}
+            />
+            {errors.full_name && (
+              <p className="mt-1 text-xs text-destructive">{errors.full_name.message}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <Label className="mb-1.5">{isFr ? "Numéro de téléphone *" : "رقم الهاتف للتواصل *"}</Label>
+              <Input dir="ltr" placeholder="0555xxxxxx" {...register("phone")} />
+              {errors.phone && (
+                <p className="mt-1 text-xs text-destructive">{errors.phone.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="mb-1.5">{isFr ? "Contact d'urgence (facultatif)" : "رقم هاتف شخص قريب للطوارئ"}</Label>
+              <Input
+                placeholder={isFr ? "Ex : Frère 0612345678" : "مثال: أخي 0612345678"}
+                {...register("emergency_contact")}
+              />
+            </div>
+          </div>
+
+          {/* Wilaya Selection */}
+          <div>
+            <Label className="mb-1.5">{isFr ? "Wilaya *" : "الولاية *"}</Label>
+            {/* Quick Select for Priority Affected Wilayas */}
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {priorityWilayas.map((pw) => {
+                const isSelected =
+                  selectedWilaya === pw.name_ar || selectedWilaya === pw.codeStr || selectedWilaya === String(pw.code);
+                return (
+                  <button
+                    key={pw.code}
+                    type="button"
+                    onClick={() => {
+                      setValue("wilaya_code", pw.name_ar, { shouldValidate: true });
+                      setValue("commune_id", "", { shouldValidate: true });
+                    }}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all active:scale-95",
+                      isSelected
+                        ? "bg-priority-critical text-white shadow-xs"
+                        : "bg-priority-critical/10 text-priority-critical hover:bg-priority-critical/20"
+                    )}
+                  >
+                    <span>⚡</span>
+                    <span>{isFr ? `${pw.codeStr} - ${pw.name_fr}` : `${pw.codeStr} - ${pw.name_ar}`}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <WilayaSelect
+              locale={locale}
+              value={selectedWilaya}
+              onChange={(e) => {
+                setValue("wilaya_code", e.target.value, { shouldValidate: true });
+                setValue("commune_id", "", { shouldValidate: true });
+              }}
+            />
+            {errors.wilaya_code && (
+              <p className="mt-1 text-xs text-destructive">{errors.wilaya_code.message}</p>
+            )}
+          </div>
+
+          {/* Commune Selection powered by ihahachi/algeria-cities */}
+          <div>
+            <Label className="mb-1.5">{isFr ? "Commune de présence / intervention *" : "البلدية (مكان التواجد / التدخل) *"}</Label>
+            <CommuneSelect
+              wilaya={selectedWilaya}
+              locale={locale}
+              value={selectedCommune}
+              onChange={(e) => setValue("commune_id", e.target.value, { shouldValidate: true })}
+            />
+            {errors.commune_id && (
+              <p className="mt-1 text-xs text-destructive">{errors.commune_id.message}</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 2. Skills & Capabilities */}
+      <Card>
+        <CardContent className="space-y-4 px-5 pt-6">
+          <div className="flex items-center gap-2 text-foreground font-bold">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-algeria-green/10 text-algeria-green text-sm font-extrabold">
+              2
+            </span>
+            <div>
+              <h2>{isFr ? "Domaines d'aide sur le terrain *" : "مجالات المساعدة الميدانية *"}</h2>
+              <p className="text-xs text-muted-foreground font-normal">
+                {isFr
+                  ? "Sélectionnez un ou plusieurs domaines où vous pouvez prêter main-forte."
+                  : "اختر مجالاً واحداً أو أكثر حسب قدرتك واستعدادك للمساعدة."}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {fieldVolunteerSkills.map((skill) => {
+              const Icon = skillIcons[skill] || Sparkles;
+              const isSelected = selectedSkills.includes(skill);
+              const label =
+                fieldVolunteerSkillLabels[skill]?.[locale] ||
+                fieldVolunteerSkillLabels[skill]?.ar ||
+                skill;
+
+              return (
+                <button
+                  type="button"
+                  key={skill}
+                  onClick={() => toggleSkill(skill)}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-2xl border text-start transition-all active:scale-[0.98]",
+                    isSelected
+                      ? "border-algeria-green bg-algeria-green/10 text-foreground font-bold shadow-xs"
+                      : "border-border bg-card/60 hover:bg-secondary/40 text-muted-foreground"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors",
+                      isSelected
+                        ? "bg-algeria-green text-white"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    <Icon className="size-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm leading-snug">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+          {errors.skills && (
+            <p className="text-xs text-destructive">{errors.skills.message}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 3. Mobility and Availability */}
+      <Card>
+        <CardContent className="space-y-4 px-5 pt-6">
+          <div className="flex items-center gap-2 text-foreground font-bold">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-algeria-green/10 text-algeria-green text-sm font-extrabold">
+              3
+            </span>
+            <h2>{isFr ? "Mobilité & Disponibilité" : "وسيلة التنقل والجاهزية"}</h2>
+          </div>
+
+          {/* Mobility Mode */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-muted-foreground">
+              {isFr ? "Mode de déplacement :" : "وضع ووسيلة التنقل :"}
+            </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {fieldVolunteerMobilityOptions.map((mob) => {
+                const Icon = mobilityIcons[mob] || Car;
+                const isSelected = selectedMobility === mob;
+                const label =
+                  fieldVolunteerMobilityLabels[mob]?.[locale] ||
+                  fieldVolunteerMobilityLabels[mob]?.ar ||
+                  mob;
+
+                return (
+                  <button
+                    type="button"
+                    key={mob}
+                    onClick={() => setValue("mobility", mob)}
+                    className={cn(
+                      "flex items-center gap-2.5 p-2.5 rounded-xl border text-start transition-all",
+                      isSelected
+                        ? "border-algeria-green bg-algeria-green/10 font-bold text-foreground"
+                        : "border-border bg-card/60 text-muted-foreground hover:bg-secondary/40"
+                    )}
+                  >
+                    <Icon className="size-4 text-algeria-green" />
+                    <span className="text-xs">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Availability */}
+          <div className="space-y-2 pt-2">
+            <Label className="text-xs font-semibold text-muted-foreground">
+              {isFr ? "Période de disponibilité :" : "أوقات التوفر والجاهزية :"}
+            </Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {fieldVolunteerAvailabilityOptions.map((avail) => {
+                const isSelected = selectedAvailability === avail;
+                const label =
+                  fieldVolunteerAvailabilityLabels[avail]?.[locale] ||
+                  fieldVolunteerAvailabilityLabels[avail]?.ar ||
+                  avail;
+
+                return (
+                  <button
+                    type="button"
+                    key={avail}
+                    onClick={() => setValue("availability", avail)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all",
+                      isSelected
+                        ? "border-algeria-green bg-algeria-green/10 font-bold text-foreground"
+                        : "border-border bg-card/60 text-muted-foreground hover:bg-secondary/40"
+                    )}
+                  >
+                    <Clock className="size-4 mb-1 text-algeria-green" />
+                    <span className="text-xs leading-tight">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Equipment available */}
+          <div className="space-y-2 pt-2">
+            <Label className="text-xs font-semibold text-muted-foreground">
+              {isFr ? "Équipements de sécurité dont vous disposez :" : "معدات السلامة المتوفرة بحوزتك :"}
+            </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {fieldVolunteerEquipmentOptions.map((eq) => {
+                const isSelected = selectedEquipment.includes(eq);
+                const label =
+                  fieldVolunteerEquipmentLabels[eq]?.[locale] ||
+                  fieldVolunteerEquipmentLabels[eq]?.ar ||
+                  eq;
+
+                return (
+                  <label
+                    key={eq}
+                    className={cn(
+                      "flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all",
+                      isSelected
+                        ? "border-algeria-green/60 bg-algeria-green/5 font-semibold text-foreground"
+                        : "border-border text-muted-foreground"
+                    )}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleEquipment(eq)}
+                    />
+                    <span className="text-xs">{label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Additional Notes */}
+          <div className="pt-2">
+            <Label className="mb-1.5">
+              {isFr ? "Remarques complémentaires (facultatif)" : "ملاحظات أو مهارات إضافية (اختياري)"}
+            </Label>
+            <Textarea
+              placeholder={
+                isFr
+                  ? "Expérience préalable, créneaux précis, connaissances particulières..."
+                  : "أي تفاصيل أخرى تساعد فرق التنسيق (مثل: خبرة كشفية، معرفة بمسالك معينة...)"
+              }
+              {...register("notes")}
+            />
+          </div>
+
+          {/* Phone Privacy Toggle */}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground pt-1 cursor-pointer">
+            <Checkbox
+              checked={showPhone}
+              onCheckedChange={(v) => setValue("show_phone_publicly", Boolean(v))}
+            />
+            <span>
+              {isFr
+                ? "J'accepte que mon numéro soit transmis directement aux coordinateurs de terrain"
+                : "أوافق على إتاحة رقم هاتفي لمنسقي الفرق الميدانية للتواصل المباشر والسريع"}
+            </span>
+          </label>
+        </CardContent>
+      </Card>
+
+      {submitError && (
+        <Alert variant="destructive">
+          <AlertDescription>{submitError}</AlertDescription>
+        </Alert>
+      )}
+
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full bg-algeria-green hover:bg-algeria-green/90 text-white font-extrabold text-base shadow-md h-12 rounded-2xl"
+        disabled={submitting}
+      >
+        {submitting ? (
+          <Loader2 className="size-5 animate-spin" />
+        ) : (
+          <HeartHandshake className="size-5 ms-1" />
+        )}
+        <span>{isFr ? "Confirmer mon inscription bénévole" : "تأكيد تسجيل التطوع الميداني"}</span>
+      </Button>
+    </form>
+  );
+}

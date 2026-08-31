@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   Radio,
   Hammer,
+  Users,
+  HandHeart,
 } from "lucide-react";
 import { LinkButton } from "@/components/shared/link-button";
 import { PlatformNotice } from "@/components/shared/platform-notice";
@@ -67,6 +69,16 @@ export default async function HomePage() {
       badgeColor: "bg-algeria-green/15 text-algeria-green",
     },
     {
+      href: "/volunteers",
+      icon: HandHeart,
+      title: t.home.actions.fieldVolunteer.title,
+      desc: t.home.actions.fieldVolunteer.desc,
+      badge: isFr ? "Terrain" : "ميداني",
+      accent: "hover:border-amber-500 hover:shadow-md",
+      iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      badgeColor: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+    },
+    {
       href: "/transport",
       icon: Truck,
       title: t.home.actions.transport.title,
@@ -87,8 +99,8 @@ export default async function HomePage() {
       icon: Hammer,
       title: isFr ? "Dégâts & Artisans" : "أضرار وترميم السكن",
       desc: isFr ? "Déclaration des dégâts et artisans." : "تصريح الأضرار وتطوع الحرفيين.",
-      accent: "hover:border-amber-500 hover:shadow-md",
-      iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      accent: "hover:border-orange-500 hover:shadow-md",
+      iconBg: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
     },
     {
       href: "/map",
@@ -196,13 +208,13 @@ export default async function HomePage() {
             </p>
           </div>
 
-          {/* Quick Action Cards Deck (Featured wide on mobile + 2x2 grid, 5-across on desktop) */}
-          <div className="mt-6 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {quickActions.map((a, idx) => (
+          {/* Quick Action Cards Deck (2-col on mobile, 3-col on tablet, 6-across on desktop) */}
+          <div className="mt-6 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {quickActions.map((a) => (
               <Link
                 key={a.href}
                 href={a.href}
-                className={`group ${idx === 0 ? "col-span-2 sm:col-span-1" : "col-span-1"}`}
+                className="group col-span-1"
               >
                 <div
                   className={`relative flex h-full flex-col justify-between rounded-2xl border border-border bg-card/95 p-3.5 sm:p-5 text-center shadow-sm backdrop-blur-sm transition-all duration-200 active:scale-[0.98] hover:-translate-y-1 hover:shadow-md ${a.accent}`}
@@ -212,13 +224,7 @@ export default async function HomePage() {
                       {a.badge}
                     </span>
                   )}
-                  <div
-                    className={`flex ${
-                      idx === 0
-                        ? "flex-row sm:flex-col items-center justify-center gap-3 text-start sm:text-center"
-                        : "flex-col items-center gap-2 sm:gap-3"
-                    }`}
-                  >
+                  <div className="flex flex-col items-center gap-2 sm:gap-3">
                     <span className={`flex size-10 sm:size-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl transition-transform duration-200 group-hover:scale-110 ${a.iconBg}`}>
                       <a.icon className="size-5 sm:size-6" aria-hidden />
                     </span>
@@ -514,6 +520,39 @@ export default async function HomePage() {
         <LinkButton href="/medical" variant="outline" className="mt-5 w-full sm:hidden">
           {t.home.medical.registerBtnMobile}
         </LinkButton>
+      </section>
+
+      {/* ————————————————————————————————— سواعد الإغاثة والتطوع الميداني */}
+      <section className="border-y border-border bg-gradient-to-b from-amber-500/5 via-card to-background py-10 sm:py-16">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-3xl border border-amber-500/30 bg-card/90 p-6 sm:p-10 shadow-xs">
+            <div className="space-y-3 text-center md:text-start max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+                <HandHeart className="size-3.5" />
+                <span>{isFr ? "Appel aux volontaires de terrain" : "نداء لسواعد الإغاثة والتطوع الميداني"}</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+                {isFr ? "Prêt à aider de vos propres mains sur le terrain ?" : "مستعد للنزول للميدان وتقديم يد العون؟"}
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                {isFr
+                  ? "Rejoignez les équipes de tri des dons, de chargement/déchargement et de distribution aux familles sinistrées dans un cadre coordonné et sécurisé."
+                  : "سجّل استعدادك للمساعدة في فرز وتغليف المساعدات، شحن وتفريغ الشاحنات، والتوزيع الميداني تحت إشراف وتوجيه خلايا التنسيق المعتمدة."}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
+              <LinkButton href="/volunteers" size="lg" className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md">
+                <HandHeart className="size-4" />
+                <span>{isFr ? "Rejoindre les équipes terrain" : "سجّل كمتطوع ميداني"}</span>
+              </LinkButton>
+              <LinkButton href="/map" variant="outline" size="lg" className="w-full font-bold">
+                <MapPin className="size-4 text-algeria-green" />
+                <span>{isFr ? "Voir les centres d'accueil" : "مراكز التجميع المفتوحة"}</span>
+              </LinkButton>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ————————————————————————————————— ترميم المنازل وإعادة التأهيل */}

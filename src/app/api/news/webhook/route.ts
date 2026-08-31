@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     const postUrl = url || "https://www.facebook.com/DGPC0018";
 
     // Deduplication check: check by exact title or url
-    let query = supabase.from("official_updates").select("id, title, url").eq("title", postTitle);
+    const query = supabase.from("official_updates").select("id, title, url").eq("title", postTitle);
     const { data: existing } = await query.maybeSingle();
 
     if (existing) {

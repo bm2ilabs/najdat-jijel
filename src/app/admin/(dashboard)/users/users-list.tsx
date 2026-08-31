@@ -5,6 +5,7 @@ import { relativeTimeAr, roleLabels, type AppRole } from "@/lib/constants";
 import { AdminListFilter } from "@/components/admin/list-filter";
 import { UserRoleSelect } from "./user-role-select";
 import { DeleteUserButton } from "./delete-user-button";
+import { ResetPasswordButton } from "./reset-password-button";
 import type { Database } from "@/types/database";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -45,6 +46,7 @@ export function UsersList({
             </div>
             <div className="flex items-center gap-2">
               <UserRoleSelect id={p.id} role={p.role} />
+              {isAdmin && p.id !== currentUserId && <ResetPasswordButton id={p.id} />}
               {isAdmin && p.id !== currentUserId && (
                 <DeleteUserButton id={p.id} name={p.full_name || "هذا المستخدم"} />
               )}

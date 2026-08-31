@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Loader2, Sparkles, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +65,12 @@ export function LoginForm() {
             />
           </div>
           <div>
-            <Label className="mb-1.5 text-xs font-bold text-foreground">كلمة المرور</Label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <Label className="text-xs font-bold text-foreground">كلمة المرور</Label>
+              <Link href="/admin/forgot-password" className="text-xs font-medium text-algeria-green hover:underline">
+                نسيت كلمة المرور؟
+              </Link>
+            </div>
             <Input
               type="password"
               dir="ltr"

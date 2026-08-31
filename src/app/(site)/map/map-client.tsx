@@ -129,15 +129,25 @@ export function MapClient({
     });
   }, [points, search, selectedKind, selectedWilaya, selectedCommune, selectedStatus]);
 
-  // Dynamic Counts
+  // Dynamic Counts scoped to current location selection
   const counts = useMemo(() => {
+    const scope = points.filter((p) => {
+      if (selectedWilaya !== "all" && p.wilaya !== selectedWilaya) return false;
+      if (selectedCommune !== "all") {
+        const normCommune = (p.commune || "").trim().toLowerCase();
+        const normSelected = selectedCommune.trim().toLowerCase();
+        if (!normCommune.includes(normSelected) && !normSelected.includes(normCommune)) return false;
+      }
+      return true;
+    });
+
     return {
-      all: points.length,
-      shelters: points.filter((p) => p.kind === "shelter").length,
-      reliefHubs: points.filter((p) => p.kind === "relief_hub").length,
-      collectionPoints: points.filter((p) => p.kind === "collection_point").length,
+      all: scope.length,
+      shelters: scope.filter((p) => p.kind === "shelter").length,
+      reliefHubs: scope.filter((p) => p.kind === "relief_hub").length,
+      collectionPoints: scope.filter((p) => p.kind === "collection_point").length,
     };
-  }, [points]);
+  }, [points, selectedWilaya, selectedCommune]);
 
   const selectedPoint = useMemo(() => {
     if (!selectedPointId) return null;
@@ -172,101 +182,11 @@ export function MapClient({
   }, []);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* 1. Category Metric Cards (Horizontal snap on mobile, Grid on desktop) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-4 sm:gap-3 sm:overflow-visible no-scrollbar">
-        {/* All Points */}
-        <button
-          type="button"
-          onClick={() => setSelectedKind("all")}
-          className={cn(
-            "flex shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 sm:flex-col sm:p-4 text-start sm:text-center transition-all cursor-pointer min-h-[44px]",
-            selectedKind === "all"
-              ? "border-foreground bg-foreground/10 shadow-sm ring-2 ring-foreground/20 font-bold"
-              : "border-border bg-card hover:border-foreground/40",
-          )}
-        >
-          <div className="flex size-7 sm:size-9 items-center justify-center rounded-xl bg-foreground/10 text-foreground">
-            <Layers className="size-4 sm:size-4.5" />
-          </div>
-          <div className="flex sm:flex-col items-baseline sm:items-center gap-1.5 sm:gap-0">
-            <span className="text-sm sm:text-2xl font-black tabular-nums">{counts.all}</span>
-            <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
-              {isFr ? "Tous les points" : "كل النقاط"}
-            </span>
-          </div>
-        </button>
-
-        {/* Shelters */}
-        <button
-          type="button"
-          onClick={() => setSelectedKind(selectedKind === "shelter" ? "all" : "shelter")}
-          className={cn(
-            "flex shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 sm:flex-col sm:p-4 text-start sm:text-center transition-all cursor-pointer min-h-[44px]",
-            selectedKind === "shelter"
-              ? "border-[#7c3aed] bg-[#7c3aed]/10 shadow-sm ring-2 ring-[#7c3aed]/30 font-bold"
-              : "border-border bg-card hover:border-[#7c3aed]/50",
-          )}
-        >
-          <div className="flex size-7 sm:size-9 items-center justify-center rounded-xl bg-[#7c3aed]/15 text-[#7c3aed]">
-            <Home className="size-4 sm:size-4.5" />
-          </div>
-          <div className="flex sm:flex-col items-baseline sm:items-center gap-1.5 sm:gap-0">
-            <span className="text-sm sm:text-2xl font-black tabular-nums text-[#7c3aed]">{counts.shelters}</span>
-            <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
-              {isFr ? "Centres d'hébergement" : "مراكز الإيواء"}
-            </span>
-          </div>
-        </button>
-
-        {/* Relief Hubs */}
-        <button
-          type="button"
-          onClick={() => setSelectedKind(selectedKind === "relief_hub" ? "all" : "relief_hub")}
-          className={cn(
-            "flex shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 sm:flex-col sm:p-4 text-start sm:text-center transition-all cursor-pointer min-h-[44px]",
-            selectedKind === "relief_hub"
-              ? "border-[#1d4ed8] bg-[#1d4ed8]/10 shadow-sm ring-2 ring-[#1d4ed8]/30 font-bold"
-              : "border-border bg-card hover:border-[#1d4ed8]/50",
-          )}
-        >
-          <div className="flex size-7 sm:size-9 items-center justify-center rounded-xl bg-[#1d4ed8]/15 text-[#1d4ed8]">
-            <HeartHandshake className="size-4 sm:size-4.5" />
-          </div>
-          <div className="flex sm:flex-col items-baseline sm:items-center gap-1.5 sm:gap-0">
-            <span className="text-sm sm:text-2xl font-black tabular-nums text-[#1d4ed8]">{counts.reliefHubs}</span>
-            <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
-              {isFr ? "Centres d'accueil" : "مراكز الاستقبال"}
-            </span>
-          </div>
-        </button>
-
-        {/* Collection Points */}
-        <button
-          type="button"
-          onClick={() => setSelectedKind(selectedKind === "collection_point" ? "all" : "collection_point")}
-          className={cn(
-            "flex shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 sm:flex-col sm:p-4 text-start sm:text-center transition-all cursor-pointer min-h-[44px]",
-            selectedKind === "collection_point"
-              ? "border-[#00843D] bg-[#00843D]/10 shadow-sm ring-2 ring-[#00843D]/30 font-bold"
-              : "border-border bg-card hover:border-[#00843D]/50",
-          )}
-        >
-          <div className="flex size-7 sm:size-9 items-center justify-center rounded-xl bg-[#00843D]/15 text-[#00843D]">
-            <Package className="size-4 sm:size-4.5" />
-          </div>
-          <div className="flex sm:flex-col items-baseline sm:items-center gap-1.5 sm:gap-0">
-            <span className="text-sm sm:text-2xl font-black tabular-nums text-[#00843D]">{counts.collectionPoints}</span>
-            <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
-              {isFr ? "Points de collecte" : "نقاط التجميع"}
-            </span>
-          </div>
-        </button>
-      </div>
-
-      {/* 2. Unified Search, Filter & View Mode Bar */}
-      <div className="rounded-2xl border border-border bg-card p-3 sm:p-4 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row gap-2.5 sm:items-center sm:justify-between">
+    <div className="space-y-4">
+      {/* 1. Location, Search & Kind Filter Panel */}
+      <div className="rounded-2xl border border-border bg-card p-3.5 sm:p-4 shadow-xs space-y-3">
+        {/* Search & Wilaya Dropdown */}
+        <div className="flex flex-col sm:flex-row gap-2.5 sm:items-center">
           {/* Search Input */}
           <div className="relative flex-1 min-w-0">
             <Search className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground rtl:right-3.5 rtl:left-auto ltr:left-3.5 ltr:right-auto" />
@@ -276,7 +196,7 @@ export function MapClient({
               onChange={(e) => setSearch(e.target.value)}
               placeholder={
                 isFr
-                  ? "Rechercher par nom, commune, wilaya ou matériel..."
+                  ? "Rechercher par nom, commune, quartier ou matériel..."
                   : "ابحث بالاسم، البلدية، الحي، أو نوع المساعدات..."
               }
               className="h-11 rounded-xl bg-background/80 px-10 text-sm shadow-inner"
@@ -292,14 +212,14 @@ export function MapClient({
             )}
           </div>
 
-          {/* Desktop Filter Dropdowns */}
-          <div className="hidden sm:flex flex-wrap items-center gap-2">
+          {/* Wilaya & Commune Dropdowns */}
+          <div className="flex flex-wrap items-center gap-2">
             <WilayaSelect
               locale={locale}
               includeAllOption={true}
               value={selectedWilaya}
               onChange={(e) => handleWilayaChange(e.target.value)}
-              className="w-auto min-w-[160px] cursor-pointer"
+              className="w-full sm:w-auto min-w-[160px] h-11 rounded-xl cursor-pointer font-bold"
             />
 
             {selectedWilaya !== "all" && (
@@ -309,20 +229,9 @@ export function MapClient({
                 includeAllOption={true}
                 value={selectedCommune}
                 onChange={(e) => setSelectedCommune(e.target.value)}
-                className="w-auto min-w-[160px] cursor-pointer animate-in fade-in"
+                className="w-full sm:w-auto min-w-[160px] h-11 rounded-xl cursor-pointer animate-in fade-in"
               />
             )}
-
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-11 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-algeria-green cursor-pointer"
-            >
-              <option value="all">{isFr ? "Tous les statuts" : "كل الحالات"}</option>
-              <option value="open">{isFr ? "Ouvert / Reçoit" : "مفتوح / يستقبل"}</option>
-              <option value="full">{isFr ? "Complet" : "ممتلئ"}</option>
-              <option value="paused">{isFr ? "En pause" : "متوقف مؤقتاً"}</option>
-            </select>
 
             {hasActiveFilters && (
               <Button
@@ -330,130 +239,20 @@ export function MapClient({
                 variant="ghost"
                 size="sm"
                 onClick={handleResetFilters}
-                className="h-11 rounded-xl text-xs font-bold text-muted-foreground hover:bg-destructive/10 hover:text-destructive gap-1.5 cursor-pointer"
+                className="h-11 rounded-xl text-xs font-bold text-muted-foreground hover:bg-destructive/10 hover:text-destructive gap-1.5 cursor-pointer shrink-0"
               >
                 <RotateCcw className="size-3.5" />
-                <span>{isFr ? "Réinitialiser" : "مسح"}</span>
-              </Button>
-            )}
-          </div>
-
-          {/* Mobile Filter Button (Opens Bottom Sheet) */}
-          <div className="flex sm:hidden items-center gap-2">
-            <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
-              <SheetTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-11 rounded-xl font-bold justify-between px-4 text-xs"
-                  />
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="size-4 text-algeria-green" />
-                  <span>{isFr ? "Filtres avancés" : "تصفية متقدمة (ولاية، بلدية، حالة)"}</span>
-                </div>
-                {activeFilterCount > 0 && (
-                  <span className="flex size-5 items-center justify-center rounded-full bg-algeria-green text-[10px] font-bold text-white">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </SheetTrigger>
-
-              <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] p-6 space-y-4">
-                <SheetHeader className="pb-2 border-b border-border text-start">
-                  <SheetTitle className="text-lg font-bold">
-                    {isFr ? "Filtrer les centres et points" : "تصفية المراكز ونقاط الإغاثة"}
-                  </SheetTitle>
-                </SheetHeader>
-
-                <div className="space-y-3.5 overflow-y-auto max-h-[55vh] py-2">
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground mb-1.5 block">
-                      {isFr ? "Wilaya" : "الولاية"}
-                    </label>
-                    <WilayaSelect
-                      locale={locale}
-                      includeAllOption={true}
-                      value={selectedWilaya}
-                      onChange={(e) => handleWilayaChange(e.target.value)}
-                      className="w-full h-12 text-sm rounded-xl"
-                    />
-                  </div>
-
-                  {selectedWilaya !== "all" && (
-                    <div>
-                      <label className="text-xs font-bold text-muted-foreground mb-1.5 block">
-                        {isFr ? "Commune" : "البلدية"}
-                      </label>
-                      <CommuneSelect
-                        wilaya={selectedWilaya}
-                        locale={locale}
-                        includeAllOption={true}
-                        value={selectedCommune}
-                        onChange={(e) => setSelectedCommune(e.target.value)}
-                        className="w-full h-12 text-sm rounded-xl"
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground mb-1.5 block">
-                      {isFr ? "Statut du centre" : "حالة الاستقبال"}
-                    </label>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full h-12 rounded-xl border border-border bg-background px-3 text-sm font-medium"
-                    >
-                      <option value="all">{isFr ? "Tous les statuts" : "كل الحالات"}</option>
-                      <option value="open">{isFr ? "مفتوح / يستقبل" : "مفتوح / يستقبل"}</option>
-                      <option value="full">{isFr ? "ممتلئ" : "ممتلئ"}</option>
-                      <option value="paused">{isFr ? "متوقف مؤقتاً" : "متوقف مؤقتاً"}</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2 border-t border-border">
-                  {hasActiveFilters && (
-                    <Button
-                      variant="outline"
-                      onClick={handleResetFilters}
-                      className="h-12 rounded-xl text-xs font-bold flex-1"
-                    >
-                      {isFr ? "Effacer" : "مسح الفلاتر"}
-                    </Button>
-                  )}
-                  <SheetClose
-                    render={
-                      <Button className="h-12 rounded-xl text-xs font-bold flex-1 bg-algeria-green text-white" />
-                    }
-                  >
-                    {isFr ? "Appliquer" : "عرض النتائج"}
-                  </SheetClose>
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            {hasActiveFilters && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={handleResetFilters}
-                className="size-11 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-              >
-                <RotateCcw className="size-4" />
+                <span>{isFr ? "Effacer" : "مسح"}</span>
               </Button>
             )}
           </div>
         </div>
 
-        {/* Priority Affected Wilayas Quick Chips Bar (Horizontal Scroll) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pt-1">
+        {/* Priority Affected Wilayas Quick Chips Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar pt-0.5">
           <span className="text-xs font-bold text-priority-critical flex items-center gap-1 shrink-0">
             <span className="inline-block size-2 rounded-full bg-priority-critical animate-pulse" />
-            {isFr ? "Zones prioritaires :" : "أولوية الإغاثة:"}
+            {isFr ? "Priorité :" : "الولايات الأكثر تضرراً:"}
           </span>
           {priorityWilayas.map((pw) => {
             const active = selectedWilaya === pw.name_ar;
@@ -463,10 +262,10 @@ export function MapClient({
                 type="button"
                 onClick={() => handleWilayaChange(active ? "all" : pw.name_ar)}
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer border min-h-[34px]",
+                  "inline-flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-all cursor-pointer border min-h-[36px]",
                   active
-                    ? "bg-priority-critical text-white border-priority-critical shadow-xs scale-105"
-                    : "bg-priority-critical/10 text-priority-critical border-priority-critical/30 hover:bg-priority-critical/20",
+                    ? "bg-priority-critical text-white border-priority-critical shadow-xs scale-102"
+                    : "bg-priority-critical/10 text-priority-critical border-priority-critical/30 hover:bg-priority-critical/20 active:scale-95",
                 )}
               >
                 <span>⚡</span>
@@ -478,24 +277,24 @@ export function MapClient({
 
         {/* Dynamic Commune Chips Bar when a specific Wilaya is active */}
         {selectedWilaya !== "all" && availableCommunes.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pt-1 animate-in fade-in">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar pt-1 border-t border-border/50 animate-in fade-in">
             <span className="text-xs font-bold text-muted-foreground flex items-center gap-1 shrink-0">
               <span>📍</span>
-              <span>{isFr ? "Communes :" : "البلديات:"}</span>
+              <span>{isFr ? "Communes :" : "بلديات الولاية:"}</span>
             </span>
             <button
               type="button"
               onClick={() => setSelectedCommune("all")}
               className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer border min-h-[34px]",
+                "inline-flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all cursor-pointer border min-h-[34px]",
                 selectedCommune === "all"
                   ? "bg-algeria-green text-white border-algeria-green shadow-xs"
-                  : "bg-muted/70 text-foreground border-border hover:bg-muted"
+                  : "bg-muted/70 text-foreground border-border hover:bg-muted active:scale-95"
               )}
             >
               {isFr ? "Toutes" : "كل البلديات"}
             </button>
-            {availableCommunes.slice(0, 18).map((c) => {
+            {availableCommunes.map((c) => {
               const active = selectedCommune === c.name_ar;
               return (
                 <button
@@ -503,10 +302,10 @@ export function MapClient({
                   type="button"
                   onClick={() => setSelectedCommune(active ? "all" : c.name_ar)}
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer border min-h-[34px]",
+                    "inline-flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer border min-h-[34px]",
                     active
-                      ? "bg-algeria-green text-white border-algeria-green shadow-xs scale-105"
-                      : "bg-background text-foreground border-border hover:border-algeria-green/50 hover:bg-algeria-green/5"
+                      ? "bg-algeria-green text-white border-algeria-green shadow-xs font-bold scale-102"
+                      : "bg-background text-foreground border-border hover:border-algeria-green/50 hover:bg-algeria-green/5 active:scale-95"
                   )}
                 >
                   <span>{isFr ? c.name_fr : c.name_ar}</span>
@@ -516,93 +315,190 @@ export function MapClient({
           </div>
         )}
 
-        {/* 3. Sticky View Switcher & Result Count */}
-        <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <span className="font-bold text-foreground tabular-nums text-sm">
+        {/* 2. Type Filter Buttons (مراكز إيواء، مراكز استقبال، نقاط تجميع) - POSITIONED DIRECTLY AFTER WILAYA */}
+        <div className="pt-2.5 border-t border-border/70 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-muted-foreground">
+              {isFr ? "Type de centre / aide :" : "نوع المركز والمساعدة :"}
+            </span>
+            {selectedWilaya !== "all" && (
+              <span className="text-xs font-bold text-algeria-green">
+                📍 {isFr ? `Wilaya de ${selectedWilaya}` : `ولاية ${selectedWilaya}`}
+                {selectedCommune !== "all" ? ` - ${selectedCommune}` : ""}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {/* All Points */}
+            <button
+              type="button"
+              onClick={() => setSelectedKind("all")}
+              className={cn(
+                "flex items-center justify-between rounded-xl border p-2.5 sm:p-3 text-start transition-all cursor-pointer min-h-[46px] active:scale-98",
+                selectedKind === "all"
+                  ? "border-foreground bg-foreground/10 shadow-xs ring-2 ring-foreground/20 font-bold"
+                  : "border-border bg-background hover:bg-muted/60"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-foreground/10 text-foreground">
+                  <Layers className="size-4" />
+                </div>
+                <span className="text-xs font-bold">{isFr ? "Tous" : "الكل"}</span>
+              </div>
+              <span className="text-sm font-black tabular-nums">{counts.all}</span>
+            </button>
+
+            {/* Shelters */}
+            <button
+              type="button"
+              onClick={() => setSelectedKind(selectedKind === "shelter" ? "all" : "shelter")}
+              className={cn(
+                "flex items-center justify-between rounded-xl border p-2.5 sm:p-3 text-start transition-all cursor-pointer min-h-[46px] active:scale-98",
+                selectedKind === "shelter"
+                  ? "border-[#7c3aed] bg-[#7c3aed]/15 shadow-xs ring-2 ring-[#7c3aed]/30 font-bold"
+                  : "border-border bg-background hover:border-[#7c3aed]/40 hover:bg-[#7c3aed]/5"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-[#7c3aed]/15 text-[#7c3aed]">
+                  <Home className="size-4" />
+                </div>
+                <span className="text-xs font-bold text-[#7c3aed]">{isFr ? "Hébergement" : "مراكز إيواء"}</span>
+              </div>
+              <span className="text-sm font-black tabular-nums text-[#7c3aed]">{counts.shelters}</span>
+            </button>
+
+            {/* Relief Hubs */}
+            <button
+              type="button"
+              onClick={() => setSelectedKind(selectedKind === "relief_hub" ? "all" : "relief_hub")}
+              className={cn(
+                "flex items-center justify-between rounded-xl border p-2.5 sm:p-3 text-start transition-all cursor-pointer min-h-[46px] active:scale-98",
+                selectedKind === "relief_hub"
+                  ? "border-[#1d4ed8] bg-[#1d4ed8]/15 shadow-xs ring-2 ring-[#1d4ed8]/30 font-bold"
+                  : "border-border bg-background hover:border-[#1d4ed8]/40 hover:bg-[#1d4ed8]/5"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-[#1d4ed8]/15 text-[#1d4ed8]">
+                  <HeartHandshake className="size-4" />
+                </div>
+                <span className="text-xs font-bold text-[#1d4ed8]">{isFr ? "Accueil" : "مراكز استقبال"}</span>
+              </div>
+              <span className="text-sm font-black tabular-nums text-[#1d4ed8]">{counts.reliefHubs}</span>
+            </button>
+
+            {/* Collection Points */}
+            <button
+              type="button"
+              onClick={() => setSelectedKind(selectedKind === "collection_point" ? "all" : "collection_point")}
+              className={cn(
+                "flex items-center justify-between rounded-xl border p-2.5 sm:p-3 text-start transition-all cursor-pointer min-h-[46px] active:scale-98",
+                selectedKind === "collection_point"
+                  ? "border-algeria-green bg-algeria-green/15 shadow-xs ring-2 ring-algeria-green/30 font-bold"
+                  : "border-border bg-background hover:border-algeria-green/40 hover:bg-algeria-green/5"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-algeria-green/15 text-algeria-green">
+                  <Package className="size-4" />
+                </div>
+                <span className="text-xs font-bold text-algeria-green">{isFr ? "Collecte" : "نقاط تجميع"}</span>
+              </div>
+              <span className="text-sm font-black tabular-nums text-algeria-green">{counts.collectionPoints}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Sticky View Switcher & Result Count */}
+      <div className="flex items-center justify-between px-1 text-xs">
+        <div className="flex items-center gap-2 text-muted-foreground font-semibold">
+          <span className="font-black text-foreground tabular-nums text-base">
+            {filteredPoints.length}
+          </span>
+          <span>{isFr ? "points et centres disponibles" : "نقطة ومركز متاح"}</span>
+        </div>
+
+        {/* Mobile View Switcher */}
+        <div className="flex lg:hidden rounded-xl bg-muted p-1 border border-border/80">
+          <button
+            type="button"
+            onClick={() => setMobileTab("map")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-all min-h-[36px] cursor-pointer",
+              mobileTab === "map"
+                ? "bg-background text-foreground shadow-xs scale-102"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <MapIcon className="size-3.5 text-algeria-green" />
+            <span>{isFr ? "Carte" : "الخريطة"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("list")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-all min-h-[36px] cursor-pointer",
+              mobileTab === "list"
+                ? "bg-background text-foreground shadow-xs scale-102"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <LayoutGrid className="size-3.5 text-algeria-green" />
+            <span>{isFr ? "Liste" : "القائمة"}</span>
+            <span className="rounded-full bg-algeria-green/15 text-algeria-green px-1.5 py-0.2 text-[10px] font-black">
               {filteredPoints.length}
             </span>
-            <span>{isFr ? "points trouvés" : "نقطة ومركز متاح"}</span>
-          </div>
+          </button>
+        </div>
 
-          {/* Mobile Big Segmented Control */}
-          <div className="flex lg:hidden rounded-xl bg-muted p-1 border border-border/80">
-            <button
-              type="button"
-              onClick={() => setMobileTab("map")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-all min-h-[36px] cursor-pointer",
-                mobileTab === "map"
-                  ? "bg-background text-foreground shadow-xs scale-102"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <MapIcon className="size-3.5 text-algeria-green" />
-              <span>{isFr ? "Carte" : "الخريطة"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileTab("list")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-all min-h-[36px] cursor-pointer",
-                mobileTab === "list"
-                  ? "bg-background text-foreground shadow-xs scale-102"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <LayoutGrid className="size-3.5 text-algeria-green" />
-              <span>{isFr ? "Liste" : "القائمة"}</span>
-              <span className="rounded-full bg-algeria-green/15 text-algeria-green px-1.5 py-0.2 text-[10px] font-black">
-                {filteredPoints.length}
-              </span>
-            </button>
-          </div>
-
-          {/* Desktop View Switcher */}
-          <div className="hidden lg:flex items-center gap-1 rounded-lg bg-muted p-1">
-            <button
-              type="button"
-              onClick={() => setViewMode("split")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all cursor-pointer",
-                viewMode === "split"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              title={isFr ? "Vue combinée (Carte & Liste)" : "عرض مدمج (خريطة + قائمة)"}
-            >
-              <SlidersHorizontal className="size-3.5" />
-              <span>{isFr ? "Split" : "عرض مدمج"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("map")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all cursor-pointer",
-                viewMode === "map"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              title={isFr ? "Carte seule" : "الخريطة فقط"}
-            >
-              <MapIcon className="size-3.5" />
-              <span>{isFr ? "Carte" : "الخريطة"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all cursor-pointer",
-                viewMode === "grid"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              title={isFr ? "Grille seule" : "البطاقات فقط"}
-            >
-              <LayoutGrid className="size-3.5" />
-              <span>{isFr ? "Grille" : "البطاقات"}</span>
-            </button>
-          </div>
+        {/* Desktop View Switcher */}
+        <div className="hidden lg:flex items-center gap-1 rounded-lg bg-muted p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("split")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
+              viewMode === "split"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title={isFr ? "Vue combinée (Carte & Liste)" : "عرض مدمج (خريطة + قائمة)"}
+          >
+            <SlidersHorizontal className="size-3.5" />
+            <span>{isFr ? "Split" : "عرض مدمج"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("map")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
+              viewMode === "map"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title={isFr ? "Carte seule" : "الخريطة فقط"}
+          >
+            <MapIcon className="size-3.5" />
+            <span>{isFr ? "Carte" : "الخريطة"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
+              viewMode === "grid"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title={isFr ? "Grille seule" : "البطاقات فقط"}
+          >
+            <LayoutGrid className="size-3.5" />
+            <span>{isFr ? "Grille" : "البطاقات"}</span>
+          </button>
         </div>
       </div>
 

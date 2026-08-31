@@ -14,44 +14,34 @@ export default async function AdminDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const isDemoAdmin = cookieStore.get("jijel_demo_admin")?.value === "true";
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const isPlaceholderDb = supabaseUrl.includes("your-project-ref") || !supabaseUrl;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  let fullName = "مشرف العمليات";
-  let role: AppRole = "admin";
+  if (!user) redirect("/admin/login");
 
-  if (!isDemoAdmin && !isPlaceholderDb) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
 
-    if (!user) redirect("/admin/login");
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!profile || !["admin", "coordinator", "volunteer"].includes(profile.role)) {
-      return (
-        <div className="flex min-h-screen items-center justify-center px-4 text-center">
-          <div>
-            <p className="text-lg font-bold">ليس لديك صلاحية الوصول إلى لوحة الإدارة</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              تواصل مع مسؤول المنصة إذا كنت تعتقد أن هذا خطأ.
-            </p>
-          </div>
+  if (!profile || !["admin", "coordinator", "volunteer"].includes(profile.role)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4 text-center">
+        <div>
+          <p className="text-lg font-bold">ليس لديك صلاحية الوصول إلى لوحة الإدارة</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            تواصل مع مسؤول المنصة إذا كنت تعتقد أن هذا خطأ.
+          </p>
         </div>
-      );
-    }
-
-    fullName = profile.full_name || "مشرف";
-    role = profile.role as AppRole;
+      </div>
+    );
   }
+
+  const fullName = profile.full_name || "مشرف";
+  const role = profile.role as AppRole;
 
   const counts = await getPendingCounts();
 

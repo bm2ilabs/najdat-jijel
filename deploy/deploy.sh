@@ -7,8 +7,10 @@ TAG="${1:?usage: deploy.sh <image-tag>}"
 cd "$(dirname "$0")"
 
 # Keep supabase/migrations in lockstep with the image being deployed.
-git -C .. fetch --tags origin
-git -C .. checkout -q "refs/tags/$TAG" 2>/dev/null || git -C .. pull --ff-only
+# -f: the VPS tree carries no local edits by contract; forced checkout
+# guarantees convergence even from a freshly-initialized repo.
+git -C .. fetch --tags --force origin
+git -C .. checkout -q -f "refs/tags/$TAG"
 
 sed -i "s/^APP_TAG=.*/APP_TAG=$TAG/" .env
 

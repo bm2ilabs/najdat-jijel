@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Phone, MapPin, Stethoscope, Briefcase, Search, PawPrint } from "lucide-react";
+import { findWilaya } from "@/lib/algeria-cities";
 import type { AvailableLocale } from "@/i18n/locales";
 
 export interface Volunteer {
@@ -12,6 +13,7 @@ export interface Volunteer {
   full_name: string;
   specialty: string;
   commune_id: string;
+  wilaya_code?: string;
   phone: string | null;
   current_workplace?: string | null;
   can_teleconsult?: boolean;
@@ -128,7 +130,10 @@ export function MedicalVolunteersList({
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary shrink-0" />
-                <span>{v.commune_id}</span>
+                <span>
+                  {v.commune_id}
+                  {v.wilaya_code ? `، ${isFr ? (findWilaya(v.wilaya_code)?.name_fr ?? v.wilaya_code) : (findWilaya(v.wilaya_code)?.name_ar ?? v.wilaya_code)}` : ""}
+                </span>
               </div>
               {v.phone && (
                 <div className="flex items-center gap-2">

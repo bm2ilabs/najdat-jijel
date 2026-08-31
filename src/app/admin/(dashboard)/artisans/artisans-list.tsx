@@ -6,6 +6,7 @@ import { relativeTimeAr, artisanVerificationStatusLabels } from "@/lib/constants
 import { AdminListFilter, type AdminBulkAction } from "@/components/admin/list-filter";
 import { ArtisanStatusSelect } from "./artisan-status-select";
 import { updateArtisanVolunteerStatus } from "@/actions/artisans";
+import { findWilaya } from "@/lib/algeria-cities";
 import type { Database } from "@/types/database";
 
 type Artisan = Database["public"]["Tables"]["artisan_volunteers"]["Row"];
@@ -52,7 +53,7 @@ export function ArtisansList({ rows }: { rows: Artisan[] }) {
             </div>
 
             <p className="text-sm">
-              {r.commune_id}، ولاية {r.wilaya_code}
+              {r.commune_id}، ولاية {findWilaya(r.wilaya_code)?.name_ar ?? r.wilaya_code}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">

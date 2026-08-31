@@ -484,6 +484,7 @@ export function NewsManager({
                         variant="ghost"
                         size="icon-sm"
                         aria-label="عرض"
+                        nativeButton={false}
                         render={<Link href={`/news/${p.slug}`} target="_blank" />}
                       >
                         <ExternalLink className="size-4" />

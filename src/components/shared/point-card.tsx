@@ -197,6 +197,7 @@ export function PointCard({
               <Button
                 size="lg"
                 className="flex-1"
+                nativeButton={false}
                 render={<a href={`tel:${point.phone.replace(/\s/g, "")}`} />}
               >
                 <Phone className="size-4" /> {isFr ? "Appeler" : "اتصال"}
@@ -206,6 +207,7 @@ export function PointCard({
               variant="outline"
               size="lg"
               className="flex-1"
+              nativeButton={false}
               render={<a href={directionsUrl} target="_blank" rel="noopener noreferrer" />}
             >
               <Navigation className="size-4" /> {isFr ? "Itinéraire" : "الاتجاهات"}

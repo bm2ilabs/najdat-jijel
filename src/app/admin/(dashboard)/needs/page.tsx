@@ -1,55 +1,40 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { getAllCategories, getTopCriticalNeeds } from "@/lib/data/admin";
+import { getAllCategories } from "@/lib/data/admin";
 import { CreateNeedDialog } from "./create-need-dialog";
-import { NeedsTable } from "./needs-table";
+import { ExportNeedsCsvButton } from "./export-csv-button";
+import { NeedsList } from "./needs-list";
 
-export const metadata: Metadata = { title: "بنك الاحتياجات الميدانية", robots: { index: false } };
+export const metadata: Metadata = { title: "الاحتياجات", robots: { index: false } };
 
 export default async function AdminNeedsPage() {
-  let rows: any[] = [];
-  let categories: any[] = [];
+  const supabase = await createClient();
+  const [{ data: needs }, categories] = await Promise.all([
+    supabase
+      .from("needs")
+      .select("*, categories(slug, name_ar)")
+      .order("created_at", { ascending: false }),
+    getAllCategories(),
+  ]);
 
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    if (supabaseUrl && !supabaseUrl.includes("your-project-ref")) {
-      const supabase = await createClient();
-      const [{ data: needs }, cats] = await Promise.all([
-        supabase
-          .from("needs")
-          .select("*, categories(slug, name_ar)")
-          .order("created_at", { ascending: false }),
-        getAllCategories(),
-      ]);
-      rows = needs ?? [];
-      categories = cats;
-    } else {
-      categories = await getAllCategories();
-      rows = await getTopCriticalNeeds(10);
-    }
-  } catch {
-    categories = await getAllCategories();
-    rows = await getTopCriticalNeeds(10);
-  }
-
-  if (rows.length === 0) {
-    rows = await getTopCriticalNeeds(10);
-  }
+  const rows = needs ?? [];
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">بنك الاحتياجات الميدانية</h1>
-        <p className="text-xs text-muted">
-          رصد وتتبع الاحتياجات الإغاثية لكل بلدية وقرية. الاحتياجات الموسومة بـ (auto) أُنشئت تلقائيًا عند انخفاض مخزون المستودعات.
-        </p>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">الاحتياجات</h1>
+          <p className="text-sm text-muted-foreground">
+            الاحتياجات المُعلَّمة (auto) أُنشئت تلقائيًا من انخفاض المخزون تحت الحد الأدنى.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ExportNeedsCsvButton rows={rows} />
+          <CreateNeedDialog categories={categories} />
+        </div>
       </div>
 
-      <NeedsTable
-        initialNeeds={rows}
-        categories={categories}
-        actionButton={<CreateNeedDialog categories={categories} />}
-      />
+      <NeedsList rows={rows} />
     </div>
   );
 }

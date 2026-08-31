@@ -118,6 +118,15 @@ const fr: Dictionary = {
     },
   },
   needs: {
+    animalMedications: {
+      badge: "Santé & Soins animaliers",
+      title: "Médicaments et soins vétérinaires pour les animaux et le bétail",
+      desc: "Les animaux et le bétail dans les zones touchées souffrent de brûlures, d'asphyxie et de blessures. Contribuez en fournissant des médicaments et soins vétérinaires pour soutenir les éleveurs et familles sinistrées.",
+      provideBtn: "Fournir des soins vétérinaires",
+      filterBtn: "Voir les besoins vétérinaires",
+      allNeedsBtn: "Voir tous les besoins",
+      activeCount: "besoin(s) de soins vétérinaires actif(s)",
+    },
     pageTitle: "Quels sont les besoins actuels ?",
     pageSubtitle: "Données transmises en direct par les équipes de terrain et le comité de coordination.",
     filterPriority: "Priorité",

@@ -21,7 +21,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { PriorityBadge } from "@/components/shared/priority-badge";
 import { PointStatusBadge } from "@/components/shared/status-badge";
 import { donationSchema, unitOptions, type DonationInput } from "@/schemas/donation";
-import { formatQuantity, getUnitLabel } from "@/lib/constants";
+import { formatQuantity, getUnitLabel, getCategoryLabel } from "@/lib/constants";
 import { CategoryIcon } from "@/components/shared/category-icon";
 import { wilayaNames } from "@/lib/wilayas";
 import { WilayaSelect } from "@/components/ui/wilaya-select";
@@ -249,7 +249,7 @@ export function DonationForm({
                         const c = categories.find((cat) => cat.id === value);
                         return c ? (
                           <>
-                            <CategoryIcon slug={c.slug} className="inline size-3.5" /> {c.name_ar}
+                            <CategoryIcon slug={c.slug} className="inline size-3.5" /> {getCategoryLabel(c.slug, c.name_ar, locale)}
                           </>
                         ) : (
                           isFr ? "Catégorie" : "نوع المساعدة"
@@ -260,7 +260,7 @@ export function DonationForm({
                   <SelectContent>
                     {categories.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        <CategoryIcon slug={c.slug} className="inline size-3.5" /> {c.name_ar}
+                        <CategoryIcon slug={c.slug} className="inline size-3.5" /> {getCategoryLabel(c.slug, c.name_ar, locale)}
                       </SelectItem>
                     ))}
                   </SelectContent>

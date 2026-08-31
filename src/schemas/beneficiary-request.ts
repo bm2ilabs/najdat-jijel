@@ -7,6 +7,7 @@ export const needCategoryOptions = [
   { value: "blankets", label: "بطانيات" },
   { value: "baby_supplies", label: "مستلزمات أطفال" },
   { value: "medical", label: "أدوية / مستلزمات طبية" },
+  { value: "veterinary", label: "أدوية ومستلزمات بيطرية" },
   { value: "hygiene", label: "مواد تنظيف" },
   { value: "kitchenware", label: "أدوات طبخ" },
   { value: "shelter", label: "مأوى" },

@@ -8,6 +8,17 @@ import { classifyNewsItem } from "@/config/news-sources";
  * Triggered by Make.com, Pipedream, Zapier, or a Python script.
  */
 export async function POST(req: Request) {
+  const secret = process.env.WEBHOOK_SECRET || process.env.CRON_SECRET;
+  const { searchParams } = new URL(req.url);
+  const token =
+    req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+    searchParams.get("secret") ||
+    searchParams.get("key");
+
+  if (secret && token !== secret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { title, text, message, url, source = "مديرية الحماية المدنية لولاية جيجل" } = body;
@@ -26,10 +37,12 @@ export async function POST(req: Request) {
     const postTitle = lines[0]?.slice(0, 200) || "بيان من الحماية المدنية - جيجل";
     const postBody = lines.slice(1).join("\n") || postText;
 
-    const campaignId = campaign?.id || "camp-01";
+    if (!campaign) {
+      return NextResponse.json({ error: "Active campaign not found" }, { status: 404 });
+    }
 
     const { data, error } = await supabase.from("official_updates").insert({
-      campaign_id: campaignId,
+      campaign_id: campaign.id,
       title: postTitle,
       body: postBody,
       source: source,

@@ -1,98 +1,50 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getAllCategories, getAllReliefHubs } from "@/lib/data/admin";
+import { EmptyState } from "@/components/shared/empty-state";
 import { RecordTransactionDialog } from "./record-transaction-dialog";
-import { InventoryView } from "./inventory-view";
+import { ExportInventoryCsvButton } from "./export-csv-button";
+import { InventoryList } from "./inventory-list";
 
-export const metadata: Metadata = { title: "إدارة المخزون والمستودعات", robots: { index: false } };
+export const metadata: Metadata = { title: "المخزون", robots: { index: false } };
 
 export default async function AdminInventoryPage() {
-  let rows: any[] = [];
-  const hubs = await getAllReliefHubs();
-  const categories = await getAllCategories();
+  const supabase = await createClient();
+  const [{ data: items }, hubs, categories] = await Promise.all([
+    supabase
+      .from("inventory_items")
+      .select("*, categories(slug, name_ar), relief_hubs(name)")
+      .order("updated_at", { ascending: false }),
+    getAllReliefHubs(),
+    getAllCategories(),
+  ]);
 
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    if (supabaseUrl && !supabaseUrl.includes("your-project-ref")) {
-      const supabase = await createClient();
-      const { data: items } = await supabase
-        .from("inventory_items")
-        .select("*, categories(slug, name_ar), relief_hubs(name)")
-        .order("updated_at", { ascending: false });
-      rows = items ?? [];
-    }
-  } catch {
-    // Keep demo items
-  }
-
-  if (rows.length === 0) {
-    rows = [
-      {
-        id: "inv-1",
-        hub_id: "hub-1",
-        category_id: "cat-1",
-        quantity: 350,
-        unit: "basket",
-        min_threshold: 500,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        categories: { slug: "food_baskets", name_ar: "طرود غذائية" },
-        relief_hubs: { name: "مركز الاستقبال والإيواء الرئيسي - بلدية جيجل" },
-      },
-      {
-        id: "inv-2",
-        hub_id: "hub-1",
-        category_id: "cat-2",
-        quantity: 1200,
-        unit: "box",
-        min_threshold: 800,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        categories: { slug: "water", name_ar: "مياه شرب" },
-        relief_hubs: { name: "مركز الاستقبال والإيواء الرئيسي - بلدية جيجل" },
-      },
-      {
-        id: "inv-3",
-        hub_id: "hub-2",
-        category_id: "cat-3",
-        quantity: 80,
-        unit: "piece",
-        min_threshold: 200,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        categories: { slug: "blankets_mattresses", name_ar: "أفرشة وأغطية" },
-        relief_hubs: { name: "مستودع الإغاثة الميداني - بلدية الطاهير" },
-      },
-      {
-        id: "inv-4",
-        hub_id: "hub-2",
-        category_id: "cat-4",
-        quantity: 45,
-        unit: "pack",
-        min_threshold: 100,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        categories: { slug: "baby_supplies", name_ar: "مستلزمات أطفال" },
-        relief_hubs: { name: "مستودع الإغاثة الميداني - بلدية الطاهير" },
-      },
-    ];
-  }
+  const rows = (items ?? []).slice().sort((a, b) => {
+    const hubCmp = (a.relief_hubs?.name ?? "").localeCompare(b.relief_hubs?.name ?? "", "ar");
+    if (hubCmp !== 0) return hubCmp;
+    return (a.categories?.name_ar ?? "").localeCompare(b.categories?.name_ar ?? "", "ar");
+  });
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">إدارة المخزون والمستودعات</h1>
-        <p className="text-xs text-muted">
-          تتبع الأرصدة المتوفرة في كل مركز استقبال وإيواء. عند نزول المخزون تحت الحد الأدنى للأمان، يقوم النظام تلقائيًا بإنشاء احتياج ميداني عاجل.
-        </p>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">المخزون</h1>
+          <p className="text-sm text-muted-foreground">
+            كل تغيير في الكمية يُسجَّل كحركة، ويولّد احتياجًا تلقائيًا عند النزول تحت الحد الأدنى.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ExportInventoryCsvButton rows={rows} />
+          <RecordTransactionDialog hubs={hubs} categories={categories} />
+        </div>
       </div>
 
-      <InventoryView
-        initialItems={rows}
-        hubs={hubs}
-        categories={categories}
-        actionButton={<RecordTransactionDialog hubs={hubs} categories={categories} />}
-      />
+      {hubs.length === 0 ? (
+        <EmptyState title="لا توجد مراكز استقبال بعد" description="أضف مركز استقبال أولًا من قسم مراكز الاستقبال." />
+      ) : (
+        <InventoryList rows={rows} hubs={hubs} />
+      )}
     </div>
   );
 }

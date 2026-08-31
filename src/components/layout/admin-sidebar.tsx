@@ -19,151 +19,129 @@ import {
   Settings,
   Megaphone,
   Newspaper,
+  Stethoscope,
+  Hammer,
+  HardHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export interface NavCounts {
-  pendingVerification?: number;
-  criticalNeeds?: number;
-  activeShipments?: number;
-}
+export type NavCounts = Record<string, number>;
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
+type GroupColor = "green" | "purple" | "blue" | "emerald" | "amber";
+type NavGroup = { title: string; color: GroupColor; items: NavItem[] };
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badgeKey?: keyof NavCounts;
-  badgeTone?: "critical" | "warning" | "info";
-}
+/**
+ * نفس لوحة الألوان المستخدمة في بطاقات الإجراءات بالصفحة الرئيسية العامة —
+ * كل قسم في القائمة الجانبية يأخذ لونًا مميزًا منها ليسهل تمييز الأقسام
+ * بصريًا بسرعة، مع إبقاء الأخضر (لون المنصة الأساسي) لحالة "العنصر النشط".
+ */
+const groupIconColor: Record<GroupColor, string> = {
+  green: "text-algeria-green",
+  purple: "text-purple-600 dark:text-purple-400",
+  blue: "text-blue-600 dark:text-blue-400",
+  emerald: "text-emerald-600 dark:text-emerald-400",
+  amber: "text-amber-600 dark:text-amber-400",
+};
 
-interface NavGroup {
-  group: string;
-  items: NavItem[];
-}
-
-const navigationGroups: NavGroup[] = [
+const groups: NavGroup[] = [
   {
-    group: "غرفة العمليات المركزية",
-    items: [
-      { href: "/admin", label: "نظرة عامة ورادار الأزمة", icon: LayoutDashboard },
-      {
-        href: "/admin/verification",
-        label: "طابور التحقق والمراجعة",
-        icon: ShieldCheck,
-        badgeKey: "pendingVerification",
-        badgeTone: "warning",
-      },
-    ],
+    title: "عام",
+    color: "green",
+    items: [{ href: "/admin", label: "نظرة عامة", icon: LayoutDashboard }],
   },
   {
-    group: "الميدان والمتضررين",
+    title: "الميدان",
+    color: "purple",
     items: [
-      { href: "/admin/beneficiaries", label: "الأسر والطلبات", icon: Users },
-      {
-        href: "/admin/needs",
-        label: "بنك الاحتياجات",
-        icon: ListChecks,
-        badgeKey: "criticalNeeds",
-        badgeTone: "critical",
-      },
-      { href: "/admin/distributions", label: "عمليات التوزيع", icon: PackageCheck },
+      { href: "/admin/beneficiaries", label: "الأسر المتضررة", icon: Users },
+      { href: "/admin/needs", label: "الاحتياجات", icon: ListChecks },
       { href: "/admin/affected-areas", label: "المناطق المتضررة", icon: TriangleAlert },
     ],
   },
   {
-    group: "اللوجستيات والمخزون",
+    title: "الموارد واللوجستيك",
+    color: "blue",
     items: [
-      { href: "/admin/inventory", label: "المخزون والمستودعات", icon: Boxes },
+      { href: "/admin/donations", label: "المساعدات", icon: Gift },
+      { href: "/admin/inventory", label: "المخزون", icon: Boxes },
       { href: "/admin/collection-points", label: "نقاط التجميع", icon: MapPin },
-      { href: "/admin/relief-hubs", label: "مراكز الاستقبال والإيواء", icon: Warehouse },
-      {
-        href: "/admin/transport",
-        label: "أسطول النقل والشحن",
-        icon: Truck,
-        badgeKey: "activeShipments",
-        badgeTone: "info",
-      },
-      { href: "/admin/donations", label: "المساعدات المسجَّلة", icon: Gift },
+      { href: "/admin/relief-hubs", label: "مراكز الاستقبال", icon: Warehouse },
+      { href: "/admin/transport", label: "النقل", icon: Truck },
+      { href: "/admin/distributions", label: "عمليات التوزيع", icon: PackageCheck },
     ],
   },
   {
-    group: "الإعلام والتوجيه",
+    title: "المتطوعون والتحقق",
+    color: "emerald",
     items: [
-      { href: "/admin/announcements", label: "شريط العواجل", icon: Megaphone },
+      { href: "/admin/verification", label: "التحقق", icon: ShieldCheck },
+      { href: "/admin/medical", label: "الأطقم الطبية", icon: Stethoscope },
+      { href: "/admin/damage-assessments", label: "تقييمات الأضرار", icon: Hammer },
+      { href: "/admin/artisans", label: "الحرفيون المتطوعون", icon: HardHat },
+    ],
+  },
+  {
+    title: "المحتوى",
+    color: "amber",
+    items: [
+      { href: "/admin/announcements", label: "شريط الأخبار", icon: Megaphone },
       { href: "/admin/news", label: "مدونة الأخبار", icon: Newspaper },
     ],
   },
   {
-    group: "الرقابة والنظام",
+    title: "النظام",
+    color: "green",
     items: [
-      { href: "/admin/reports", label: "التقارير والتصدير", icon: BarChart3 },
-      { href: "/admin/users", label: "المشرفون وفريق العمل", icon: UserCog },
-      { href: "/admin/settings", label: "إعدادات المنصة", icon: Settings },
+      { href: "/admin/users", label: "المستخدمون", icon: UserCog },
+      { href: "/admin/reports", label: "التقارير", icon: BarChart3 },
+      { href: "/admin/settings", label: "الإعدادات", icon: Settings },
     ],
   },
 ];
 
 export function AdminSidebarNav({
-  counts = {},
   onNavigate,
+  counts = {},
 }: {
-  counts?: NavCounts;
   onNavigate?: () => void;
+  /** عدد العناصر "قيد الانتظار" لكل مسار — تُعرض كشارة حمراء بجانب الرابط. */
+  counts?: NavCounts;
 }) {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-4 pb-6" aria-label="تنقل لوحة الإدارة">
-      {navigationGroups.map((group, gIdx) => (
-        <div key={gIdx} className="space-y-1">
-          <p className="px-3 text-[10.5px] font-bold uppercase tracking-wider text-ops-muted">
-            {group.group}
+    <nav className="space-y-4">
+      {groups.map((group) => (
+        <div key={group.title}>
+          <p className="mb-1 flex items-center gap-1.5 px-3 text-[11px] font-bold tracking-wide text-muted-foreground/70">
+            <span className={cn("size-1.5 rounded-full", groupIconColor[group.color], "bg-current")} />
+            {group.title}
           </p>
           <div className="space-y-0.5">
             {group.items.map((item) => {
               const active =
-                item.href === "/admin"
-                  ? pathname === "/admin"
-                  : pathname === item.href || pathname?.startsWith(`${item.href}/`);
+                item.href === "/admin" ? pathname === "/admin" : pathname?.startsWith(item.href);
               const Icon = item.icon;
-              const badgeCount = item.badgeKey ? counts[item.badgeKey] : undefined;
-
+              const count = counts[item.href] ?? 0;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    "group flex items-center justify-between gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-150",
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     active
-                      ? "bg-verified/15 text-verified-deep font-bold border-s-2 border-verified shadow-xs"
-                      : "text-ops-fg/80 hover:bg-ops-surface-2 hover:text-ops-fg"
+                      ? "bg-algeria-green/10 text-algeria-green font-bold"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <Icon
-                      className={cn(
-                        "size-4 shrink-0 transition-colors",
-                        active ? "text-verified-deep" : "text-ops-muted group-hover:text-ops-fg"
-                      )}
-                    />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-
-                  {typeof badgeCount === "number" && badgeCount > 0 && (
-                    <span
-                      className={cn(
-                        "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10.5px] font-bold tabular-nums",
-                        item.badgeTone === "critical"
-                          ? "bg-danger text-white animate-pulse"
-                          : item.badgeTone === "warning"
-                          ? "bg-caution-deep text-white"
-                          : "bg-action text-white"
-                      )}
-                    >
-                      {badgeCount}
+                  <Icon className={cn("size-4 shrink-0", !active && groupIconColor[group.color])} />
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {count > 0 ? (
+                    <span className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-priority-critical px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                      {count > 99 ? "99+" : count}
                     </span>
-                  )}
+                  ) : null}
                 </Link>
               );
             })}

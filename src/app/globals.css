@@ -182,22 +182,6 @@
   --verify-pending: oklch(0.72 0.15 75);
   --verify-verified: oklch(0.48 0.14 150);
   --verify-field: oklch(0.48 0.16 252);
-
-  /* Specific Design System Palette Tokens */
-  --danger: oklch(0.54 0.20 27);
-  --danger-deep: oklch(0.44 0.18 27);
-  --danger-bg: oklch(0.96 0.025 27);
-  --caution: oklch(0.72 0.15 75);
-  --caution-deep: oklch(0.50 0.12 70);
-  --caution-bg: oklch(0.96 0.05 85);
-  --verified: oklch(0.48 0.14 150);
-  --verified-deep: oklch(0.38 0.12 150);
-  --verified-bg: oklch(0.955 0.04 150);
-  --official: oklch(0.36 0.09 262);
-  --official-bg: oklch(0.94 0.03 262);
-  --action: oklch(0.48 0.16 252);
-  --action-deep: oklch(0.40 0.15 252);
-  --action-bg: oklch(0.95 0.035 252);
 }
 
 .dark {
@@ -252,21 +236,6 @@
   --verify-pending: oklch(0.75 0.15 75);
   --verify-verified: oklch(0.58 0.16 150);
   --verify-field: oklch(0.65 0.16 250);
-
-  --danger: oklch(0.65 0.22 25);
-  --danger-deep: oklch(0.55 0.20 25);
-  --danger-bg: oklch(0.25 0.04 25);
-  --caution: oklch(0.75 0.15 75);
-  --caution-deep: oklch(0.60 0.14 75);
-  --caution-bg: oklch(0.25 0.04 75);
-  --verified: oklch(0.58 0.16 150);
-  --verified-deep: oklch(0.48 0.14 150);
-  --verified-bg: oklch(0.25 0.04 150);
-  --official: oklch(0.60 0.10 262);
-  --official-bg: oklch(0.25 0.03 262);
-  --action: oklch(0.65 0.16 250);
-  --action-deep: oklch(0.55 0.14 250);
-  --action-bg: oklch(0.25 0.04 250);
 }
 
 @layer base {

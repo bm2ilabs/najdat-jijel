@@ -1,13 +1,21 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { syncOfficialNews, OFFICIAL_ALGERIAN_SOURCES } from "@/lib/services/news-ingestion";
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const authKey = searchParams.get("key");
-  const cronSecret = process.env.CRON_SECRET;
+function isAuthorized(req: Request): boolean {
+  const cronSecret = process.env.CRON_SECRET || process.env.WEBHOOK_SECRET;
+  if (!cronSecret) return true;
 
-  // If CRON_SECRET is set, ensure request is authorized
-  if (cronSecret && authKey !== cronSecret) {
+  const { searchParams } = new URL(req.url);
+  const token =
+    req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+    searchParams.get("key") ||
+    searchParams.get("secret");
+
+  return token === cronSecret;
+}
+
+export async function GET(req: Request) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -21,7 +29,11 @@ export async function GET(req: Request) {
   });
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const result = await syncOfficialNews();
   return NextResponse.json({
     success: result.success,

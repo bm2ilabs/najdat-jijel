@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { PawPrint } from "lucide-react";
 import { NeedCard } from "@/components/shared/need-card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { LinkButton } from "@/components/shared/link-button";
 import { getAllActiveNeeds, getCategories } from "@/lib/data/public";
 import { NeedsFilters } from "./needs-filters";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -36,6 +38,10 @@ export default async function NeedsPage({
     return true;
   });
 
+  const veterinaryNeedsCount = needs.filter(
+    (n) => n.categories?.slug === "veterinary" || n.category_id === "veterinary",
+  ).length;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-6 text-center sm:text-start">
@@ -44,6 +50,48 @@ export default async function NeedsPage({
           {t.needs.pageSubtitle}
         </p>
       </div>
+
+      {/* ————————————————————————————————— قسم الأدوية والمستلزمات البيطرية */}
+      <section className="mb-6 rounded-2xl border border-algeria-green/30 bg-algeria-green/5 p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-algeria-green/10 text-algeria-green">
+              <PawPrint className="size-5" />
+            </span>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg font-bold">{t.needs.animalMedications.title}</h2>
+                <span className="rounded-full bg-algeria-green/15 px-2.5 py-0.5 text-xs font-semibold text-algeria-green">
+                  {t.needs.animalMedications.badge}
+                </span>
+                {veterinaryNeedsCount > 0 && (
+                  <span className="rounded-full bg-priority-critical/10 px-2 py-0.5 text-xs font-bold text-priority-critical">
+                    {veterinaryNeedsCount} {t.needs.animalMedications.activeCount}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                {t.needs.animalMedications.desc}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2 sm:self-center">
+            <LinkButton href="/donate?category=veterinary" size="sm">
+              <PawPrint className="size-4" />
+              {t.needs.animalMedications.provideBtn}
+            </LinkButton>
+            <LinkButton
+              href={params.category === "veterinary" ? "/needs" : "/needs?category=veterinary"}
+              variant="outline"
+              size="sm"
+            >
+              {params.category === "veterinary"
+                ? t.needs.animalMedications.allNeedsBtn
+                : t.needs.animalMedications.filterBtn}
+            </LinkButton>
+          </div>
+        </div>
+      </section>
 
       <NeedsFilters
         categories={relevantCategories}

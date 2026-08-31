@@ -8,6 +8,7 @@ import {
   Baby,
   ShowerHead,
   Pill,
+  PawPrint,
   CookingPot,
   Package,
   Tent,
@@ -325,6 +326,7 @@ export const categoryIcon: Record<string, LucideIcon> = {
   baby_supplies: Baby,
   hygiene: ShowerHead,
   medical: Pill,
+  veterinary: PawPrint,
   kitchenware: CookingPot,
   relief_materials: Package,
   shelter: Tent,
@@ -582,3 +584,49 @@ export function getDamageAssessmentStatusLabel(
   return localizedDamageAssessmentStatusLabels[locale]?.[status] ?? damageAssessmentStatusLabels[status];
 }
 
+
+export const localizedCategoryLabels: Record<AvailableLocale, Record<string, string>> = {
+  ar: {
+    water: "ماء",
+    food: "غذاء",
+    clothing: "ملابس",
+    blankets: "أغطية وبطانيات",
+    baby_supplies: "مستلزمات أطفال",
+    hygiene: "مواد نظافة",
+    medical: "أدوية ومستلزمات طبية",
+    veterinary: "أدوية ومستلزمات بيطرية",
+    kitchenware: "أدوات طبخ",
+    relief_materials: "مواد إغاثة متنوعة",
+    shelter: "مأوى",
+    construction_materials: "مواد بناء",
+    cooking_gas: "غاز طهي",
+    manpower: "أيدي عاملة",
+    other: "أخرى",
+  },
+  fr: {
+    water: "Eau potable",
+    food: "Nourriture",
+    clothing: "Vêtements",
+    blankets: "Couvertures",
+    baby_supplies: "Articles pour bébés",
+    hygiene: "Produits d'hygiène",
+    medical: "Médicaments & soins",
+    veterinary: "Médicaments & soins vétérinaires",
+    kitchenware: "Ustensiles de cuisine",
+    relief_materials: "Matériel d'urgence",
+    shelter: "Hébergement d'urgence",
+    construction_materials: "Matériaux de construction",
+    cooking_gas: "Bouteilles de gaz",
+    manpower: "Main-d'œuvre",
+    other: "Autre",
+  },
+};
+
+export function getCategoryLabel(
+  slug: string | null | undefined,
+  defaultName?: string,
+  locale: AvailableLocale = "ar",
+): string {
+  if (!slug) return defaultName ?? "";
+  return localizedCategoryLabels[locale]?.[slug] ?? defaultName ?? slug;
+}

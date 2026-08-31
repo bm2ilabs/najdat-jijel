@@ -86,7 +86,7 @@ export default async function AdminMedicalPage() {
                   {r.notes && <p className="text-xs text-muted-foreground">{r.notes}</p>}
 
                   <p className="text-xs text-muted-foreground">
-                    {medicalVerificationStatusLabels[r.status]} · {relativeTimeAr(r.created_at)}
+                    {(medicalVerificationStatusLabels as any)[r.status] ?? r.status} · {relativeTimeAr(r.created_at)}
                   </p>
                 </CardContent>
               </Card>

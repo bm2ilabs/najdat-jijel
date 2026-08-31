@@ -6,6 +6,7 @@ import { relativeTimeAr, medicalVerificationStatusLabels } from "@/lib/constants
 import { AdminListFilter, type AdminBulkAction } from "@/components/admin/list-filter";
 import { MedicalStatusSelect } from "./medical-status-select";
 import { updateMedicalVolunteerStatus } from "@/actions/medical";
+import { findWilaya } from "@/lib/algeria-cities";
 import type { Database } from "@/types/database";
 
 type Volunteer = Database["public"]["Tables"]["medical_volunteers"]["Row"];
@@ -54,7 +55,7 @@ export function MedicalList({ rows }: { rows: Volunteer[] }) {
               </div>
 
               <p className="text-sm">
-                {r.commune_id}، ولاية {r.wilaya_code}
+                {r.commune_id}، ولاية {findWilaya(r.wilaya_code)?.name_ar ?? r.wilaya_code}
                 {r.current_workplace && ` — ${r.current_workplace}`}
               </p>
 

@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WilayaSelect } from "@/components/ui/wilaya-select";
+import { CommuneSelect } from "@/components/ui/commune-select";
+import { priorityWilayas } from "@/lib/algeria-cities";
+import { cn } from "@/lib/utils";
 import { artisanVolunteerSchema, type ArtisanVolunteerInput } from "@/schemas/artisan-volunteer";
 import { SuccessPanel } from "@/components/shared/success-panel";
 import { submitArtisanVolunteer } from "@/actions/artisans";
@@ -34,7 +38,7 @@ export function ArtisanForm({ locale = "ar" }: { locale?: AvailableLocale }) {
       full_name: "",
       phone: "",
       specialty: "",
-      wilaya_code: "18",
+      wilaya_code: "جيجل",
       commune_id: "",
       can_travel: true,
       has_own_tools: false,
@@ -43,6 +47,7 @@ export function ArtisanForm({ locale = "ar" }: { locale?: AvailableLocale }) {
     },
   });
 
+  const selectedWilaya = watch("wilaya_code");
   const canTravel = watch("can_travel");
   const hasOwnTools = watch("has_own_tools");
   const showPhonePublicly = watch("show_phone_publicly");
@@ -118,9 +123,65 @@ export function ArtisanForm({ locale = "ar" }: { locale?: AvailableLocale }) {
             )}
           </div>
 
+          {/* Wilaya selection */}
           <div>
-            <Label className="mb-1.5">{isFr ? "Commune ou lieu de résidence *" : "البلدية أو مكان التواجد *"}</Label>
-            <Input placeholder={isFr ? "Ex : Jijel, Taher, El Milia..." : "مثال: جيجل، تاكسنة، الميلية، الشقفة..."} {...register("commune_id")} />
+            <Label className="mb-2 flex items-center justify-between">
+              <span>{isFr ? "Wilaya de résidence ou d'activité *" : "الولاية (مقر الإقامة أو النشاط) *"}</span>
+              <span className="text-xs font-bold text-priority-critical flex items-center gap-1">
+                <span className="inline-block size-1.5 rounded-full bg-priority-critical animate-pulse" />
+                {isFr ? "Zones sinistrées prioritaires" : "المناطق المتضررة ذات الأولوية"}
+              </span>
+            </Label>
+
+            {/* Quick Priority Wilaya Buttons */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {priorityWilayas.map((pw) => {
+                const active = selectedWilaya === pw.name_ar || selectedWilaya === pw.codeStr || selectedWilaya === String(pw.code);
+                return (
+                  <button
+                    key={pw.code}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setValue("wilaya_code", pw.name_ar, { shouldValidate: true });
+                      setValue("commune_id", "");
+                    }}
+                    className={cn(
+                      "rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      active
+                        ? "border-priority-critical bg-priority-critical text-white shadow-sm scale-105"
+                        : "border-priority-critical/30 bg-priority-critical/10 text-priority-critical hover:bg-priority-critical/20",
+                    )}
+                  >
+                    <span>⚡</span>
+                    <span>{isFr ? `${pw.codeStr} - ${pw.name_fr}` : `${pw.codeStr} - ${pw.name_ar}`}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <WilayaSelect
+              locale={locale}
+              value={selectedWilaya}
+              onChange={(e) => {
+                setValue("wilaya_code", e.target.value, { shouldValidate: true });
+                setValue("commune_id", "");
+              }}
+            />
+            {errors.wilaya_code && (
+              <p className="mt-1 text-sm text-destructive">{errors.wilaya_code.message}</p>
+            )}
+          </div>
+
+          {/* Commune selection */}
+          <div>
+            <Label className="mb-1.5">{isFr ? "Commune de résidence *" : "البلدية (مكان الإقامة أو الورشة) *"}</Label>
+            <CommuneSelect
+              wilaya={selectedWilaya}
+              locale={locale}
+              value={watch("commune_id")}
+              onChange={(e) => setValue("commune_id", e.target.value, { shouldValidate: true })}
+            />
             {errors.commune_id && (
               <p className="mt-1 text-sm text-destructive">{errors.commune_id.message}</p>
             )}

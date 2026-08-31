@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WilayaSelect } from "@/components/ui/wilaya-select";
+import { CommuneSelect } from "@/components/ui/commune-select";
+import { priorityWilayas } from "@/lib/algeria-cities";
+import { cn } from "@/lib/utils";
 import {
   medicalVolunteerSchema,
   type MedicalVolunteerInput,
@@ -43,7 +47,7 @@ export function MedicalVolunteerForm({
       email: "",
       specialty: "",
       license_number: "",
-      wilaya_code: "18",
+      wilaya_code: "جيجل",
       commune_id: "",
       current_workplace: "",
       can_field_intervene: true,
@@ -54,6 +58,7 @@ export function MedicalVolunteerForm({
     },
   });
 
+  const selectedWilaya = watch("wilaya_code");
   const canFieldIntervene = watch("can_field_intervene");
   const canTeleconsult = watch("can_teleconsult");
   const hasEmergencyKit = watch("has_emergency_kit");
@@ -133,9 +138,65 @@ export function MedicalVolunteerForm({
             )}
           </div>
 
+          {/* Wilaya selection */}
           <div>
-            <Label className="mb-1.5">{isFr ? "Commune ou lieu de résidence *" : "البلدية أو مكان التواجد *"}</Label>
-            <Input placeholder={isFr ? "Ex: Jijel, Taher, El Milia..." : "مثال: جيجل، تاكسنة، الميلية، الشقفة..."} {...register("commune_id")} />
+            <Label className="mb-2 flex items-center justify-between">
+              <span>{isFr ? "Wilaya d'exercice ou de résidence *" : "الولاية (مقر الإقامة أو الممارسة) *"}</span>
+              <span className="text-xs font-bold text-priority-critical flex items-center gap-1">
+                <span className="inline-block size-1.5 rounded-full bg-priority-critical animate-pulse" />
+                {isFr ? "Zones sinistrées prioritaires" : "المناطق المتضررة ذات الأولوية"}
+              </span>
+            </Label>
+
+            {/* Quick Priority Wilaya Buttons */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {priorityWilayas.map((pw) => {
+                const active = selectedWilaya === pw.name_ar || selectedWilaya === pw.codeStr || selectedWilaya === String(pw.code);
+                return (
+                  <button
+                    key={pw.code}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setValue("wilaya_code", pw.name_ar, { shouldValidate: true });
+                      setValue("commune_id", "");
+                    }}
+                    className={cn(
+                      "rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      active
+                        ? "border-priority-critical bg-priority-critical text-white shadow-sm scale-105"
+                        : "border-priority-critical/30 bg-priority-critical/10 text-priority-critical hover:bg-priority-critical/20",
+                    )}
+                  >
+                    <span>⚡</span>
+                    <span>{isFr ? `${pw.codeStr} - ${pw.name_fr}` : `${pw.codeStr} - ${pw.name_ar}`}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <WilayaSelect
+              locale={locale}
+              value={selectedWilaya}
+              onChange={(e) => {
+                setValue("wilaya_code", e.target.value, { shouldValidate: true });
+                setValue("commune_id", "");
+              }}
+            />
+            {errors.wilaya_code && (
+              <p className="mt-1 text-sm text-destructive">{errors.wilaya_code.message}</p>
+            )}
+          </div>
+
+          {/* Commune selection */}
+          <div>
+            <Label className="mb-1.5">{isFr ? "Commune de résidence / intervention *" : "البلدية (مكان التواجد / التدخل) *"}</Label>
+            <CommuneSelect
+              wilaya={selectedWilaya}
+              locale={locale}
+              value={watch("commune_id")}
+              onChange={(e) => setValue("commune_id", e.target.value, { shouldValidate: true })}
+            />
             {errors.commune_id && (
               <p className="mt-1 text-sm text-destructive">{errors.commune_id.message}</p>
             )}

@@ -20,7 +20,7 @@ const officialUpdateColumns: CsvColumn<OfficialUpdate>[] = [
   { header: "المصدر", value: (u) => u.source },
   { header: "النوع", value: (u) => u.update_type },
   { header: "الرابط", value: (u) => u.url ?? "" },
-  { header: "تاريخ النشر", value: (u) => new Date(u.published_at).toLocaleString("ar-DZ") },
+  { header: "تاريخ النشر", value: (u) => u.published_at ? new Date(u.published_at).toLocaleString("ar-DZ") : "" },
 ];
 
 export function ExportPostsCsvButton({ rows }: { rows: Post[] }) {

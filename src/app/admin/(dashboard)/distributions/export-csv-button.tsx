@@ -13,11 +13,11 @@ type Distribution = Database["public"]["Tables"]["distributions"]["Row"] & {
 
 const columns: CsvColumn<Distribution>[] = [
   { header: "المادة", value: (d) => d.categories?.name_ar ?? "" },
-  { header: "الكمية", value: (d) => `${d.quantity} ${unitLabels[d.unit]}` },
+  { header: "الكمية", value: (d) => `${d.quantity} ${unitLabels[d.unit] ?? d.unit ?? ""}`.trim() },
   { header: "المركز", value: (d) => d.relief_hubs?.name ?? "" },
   { header: "عدد الأسر المستفيدة", value: (d) => d.beneficiary_family_count },
   { header: "المسؤول", value: (d) => d.responsible_name },
-  { header: "تاريخ التوزيع", value: (d) => d.distribution_date },
+  { header: "تاريخ التوزيع", value: (d) => d.distribution_date ?? "" },
 ];
 
 export function ExportDistributionsCsvButton({ rows }: { rows: Distribution[] }) {

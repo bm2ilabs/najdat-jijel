@@ -13,13 +13,13 @@ type Need = Database["public"]["Tables"]["needs"]["Row"] & {
 const columns: CsvColumn<Need>[] = [
   { header: "العنوان", value: (n) => n.title ?? n.categories?.name_ar ?? "" },
   { header: "المادة", value: (n) => n.categories?.name_ar ?? "" },
-  { header: "الأولوية", value: (n) => priorityLabels[n.priority] },
-  { header: "الحالة", value: (n) => needStatusLabels[n.status] },
+  { header: "الأولوية", value: (n) => priorityLabels[n.priority] ?? n.priority },
+  { header: "الحالة", value: (n) => needStatusLabels[n.status] ?? n.status },
   { header: "الولاية", value: (n) => n.wilaya },
   { header: "البلدية", value: (n) => n.commune },
-  { header: "الكمية المطلوبة", value: (n) => `${n.quantity_needed} ${unitLabels[n.unit]}` },
-  { header: "الكمية المتوفرة", value: (n) => `${n.quantity_available} ${unitLabels[n.unit]}` },
-  { header: "تاريخ الإنشاء", value: (n) => new Date(n.created_at).toLocaleString("ar-DZ") },
+  { header: "الكمية المطلوبة", value: (n) => `${n.quantity_needed} ${unitLabels[n.unit] ?? n.unit ?? ""}`.trim() },
+  { header: "الكمية المتوفرة", value: (n) => `${n.quantity_available} ${unitLabels[n.unit] ?? n.unit ?? ""}`.trim() },
+  { header: "تاريخ الإنشاء", value: (n) => n.created_at ? new Date(n.created_at).toLocaleString("ar-DZ") : "" },
 ];
 
 export function ExportNeedsCsvButton({ rows }: { rows: Need[] }) {

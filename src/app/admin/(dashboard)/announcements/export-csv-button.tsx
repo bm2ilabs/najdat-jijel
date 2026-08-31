@@ -10,7 +10,7 @@ type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 const columns: CsvColumn<Announcement>[] = [
   { header: "الرسالة", value: (a) => a.message },
   { header: "الحالة", value: (a) => (a.is_active ? "مفعّلة" : "متوقفة") },
-  { header: "تاريخ الإنشاء", value: (a) => new Date(a.created_at).toLocaleString("ar-DZ") },
+  { header: "تاريخ الإنشاء", value: (a) => a.created_at ? new Date(a.created_at).toLocaleString("ar-DZ") : "" },
 ];
 
 export function ExportAnnouncementsCsvButton({ rows }: { rows: Announcement[] }) {

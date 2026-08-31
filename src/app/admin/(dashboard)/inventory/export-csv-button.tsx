@@ -14,9 +14,9 @@ type InventoryRow = Database["public"]["Tables"]["inventory_items"]["Row"] & {
 const columns: CsvColumn<InventoryRow>[] = [
   { header: "المركز", value: (i) => i.relief_hubs?.name ?? "" },
   { header: "المادة", value: (i) => i.categories?.name_ar ?? "" },
-  { header: "الكمية", value: (i) => `${i.quantity} ${unitLabels[i.unit]}` },
+  { header: "الكمية", value: (i) => `${i.quantity} ${unitLabels[i.unit] ?? i.unit ?? ""}`.trim() },
   { header: "الحد الأدنى", value: (i) => i.min_threshold },
-  { header: "آخر تحديث", value: (i) => new Date(i.updated_at).toLocaleString("ar-DZ") },
+  { header: "آخر تحديث", value: (i) => i.updated_at ? new Date(i.updated_at).toLocaleString("ar-DZ") : "" },
 ];
 
 export function ExportInventoryCsvButton({ rows }: { rows: InventoryRow[] }) {

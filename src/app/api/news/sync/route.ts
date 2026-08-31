@@ -22,14 +22,22 @@ function isAuthorizedByToken(req: Request): boolean {
 async function isAuthorized(req: Request): Promise<boolean> {
   if (isAuthorizedByToken(req)) return true;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-  return !!profile && staffRoles.includes(profile.role);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    return !!profile && staffRoles.includes(profile.role);
+  } catch {
+    return false;
+  }
 }
 
 export async function GET(req: Request) {

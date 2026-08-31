@@ -1,7 +1,7 @@
 export interface OfficialSourceConfig {
   id: string;
   name: string;
-  authority: "protection_civile" | "gendarmerie" | "police" | "forets" | "wilaya" | "aps";
+  authority: "protection_civile" | "gendarmerie" | "police" | "forets" | "wilaya" | "aps" | "humanitarian" | "meteo";
   badgeNameAr: string;
   avatarColor: string;
   feedUrl?: string;
@@ -35,12 +35,66 @@ export const OFFICIAL_ALGERIAN_SOURCES: OfficialSourceConfig[] = [
     enabled: true,
   },
   {
+    id: "dgpc_setif",
+    name: "مديرية الحماية المدنية لولاية سطيف",
+    authority: "protection_civile",
+    badgeNameAr: "الحماية المدنية - سطيف",
+    avatarColor: "bg-red-500/15 text-red-600 border-red-500/30",
+    sourceUrl: "https://www.facebook.com/DGPC0019/",
+    enabled: true,
+  },
+  {
+    id: "dgpc_mila",
+    name: "مديرية الحماية المدنية لولاية ميلة",
+    authority: "protection_civile",
+    badgeNameAr: "الحماية المدنية - ميلة",
+    avatarColor: "bg-red-500/15 text-red-600 border-red-500/30",
+    sourceUrl: "https://www.facebook.com/DGPC0043/",
+    enabled: true,
+  },
+  {
+    id: "dgpc_bejaia",
+    name: "مديرية الحماية المدنية لولاية بجاية",
+    authority: "protection_civile",
+    badgeNameAr: "الحماية المدنية - بجاية",
+    avatarColor: "bg-red-500/15 text-red-600 border-red-500/30",
+    sourceUrl: "https://www.facebook.com/DGPC0006",
+    enabled: true,
+  },
+  {
+    id: "dgpc_skikda",
+    name: "مديرية الحماية المدنية لولاية سكيكدة",
+    authority: "protection_civile",
+    badgeNameAr: "الحماية المدنية - سكيكدة",
+    avatarColor: "bg-red-500/15 text-red-600 border-red-500/30",
+    sourceUrl: "https://www.facebook.com/DGPC0021",
+    enabled: true,
+  },
+  {
     id: "dgpc_national",
     name: "المديرية العامة للحماية المدنية",
     authority: "protection_civile",
     badgeNameAr: "الحماية المدنية (الوطنية)",
     avatarColor: "bg-red-500/15 text-red-600 border-red-500/30",
     sourceUrl: "https://www.facebook.com/DGPC.Algerie",
+    enabled: true,
+  },
+  {
+    id: "meteo_algerie",
+    name: "الديوان الوطني للأرصاد الجوية (Météo Algérie)",
+    authority: "meteo",
+    badgeNameAr: "الأرصاد الجوية",
+    avatarColor: "bg-sky-500/15 text-sky-600 border-sky-500/30",
+    sourceUrl: "https://www.facebook.com/MeteoAlgerieOfficiel/",
+    enabled: true,
+  },
+  {
+    id: "cra_algerie",
+    name: "الهلال الأحمر الجزائري",
+    authority: "humanitarian",
+    badgeNameAr: "الهلال الأحمر الجزائري",
+    avatarColor: "bg-rose-500/15 text-rose-700 border-rose-500/30",
+    sourceUrl: "https://www.facebook.com/algerianred/?locale=fr_FR",
     enabled: true,
   },
   {
@@ -82,7 +136,7 @@ export const OFFICIAL_ALGERIAN_SOURCES: OfficialSourceConfig[] = [
 ];
 
 /**
- * Heuristic classifier for news content based on keywords
+ * Heuristic classifier for news content based on domain keywords
  */
 export function classifyNewsItem(text: string): {
   update_type: IngestedNewsItem["update_type"];
@@ -94,58 +148,85 @@ export function classifyNewsItem(text: string): {
   // 1. Detect Urgency
   const is_urgent =
     normalized.includes("عاجل") ||
+    normalized.includes("urgent") ||
     normalized.includes("إنذار") ||
     normalized.includes("تحذير عالي") ||
     normalized.includes("إخلاء فوري") ||
     normalized.includes("طريق مقطوع") ||
-    normalized.includes("غلق تام");
+    normalized.includes("غلق تام") ||
+    normalized.includes("خطر داهم") ||
+    normalized.includes("ضحايا") ||
+    normalized.includes("حصار النيران");
 
-  // 2. Detect Wilaya
+  // 2. Detect Wilaya & Municipalities (Communes)
   let wilaya: string | undefined = undefined;
-  if (normalized.includes("جيجل") || normalized.includes("العوانة") || normalized.includes("زيامة") || normalized.includes("الميلية") || normalized.includes("الطاهير")) {
+
+  const jijelKeywords = [
+    "جيجل", "العوانة", "زيامة", "منصورية", "الميلية", "الطاهير", "جيملة",
+    "تاكسنة", "الشقفة", "قاوس", "سلمى بن زيادة", "إيراقن", "سيدي عبد العزيز",
+    "بني حبيبي", "بوراوي بلهادف", "السطارة", "جمعة بني حبيبي", "برج الطهر",
+    "العنصر", "خيري واد عجول", "اميلكار", "واد الصغير", "الخيارة"
+  ];
+
+  const bejaiaKeywords = [
+    "بجاية", "bejaia", "béjaïa", "تيشي", "أوقاس", "خراطة", "سوق الاثنين", "القصر", "أميزور", "تاسكريوت"
+  ];
+
+  const setifKeywords = [
+    "سطيف", "setif", "sétif", "بابور", "بوسلام", "عين الروى", "بني ورتيلان", "عموشة", "العلمة"
+  ];
+
+  const milaKeywords = [
+    "ميلة", "mila", "فرجيوة", "شلغوم العيد", "قرارم", "تسدان حدادة", "بوحاتم"
+  ];
+
+  const skikdaKeywords = [
+    "سكيكدة", "skikda", "القل", "تمالوس", "الزردازة", "عين قشرة", "أولاد عطية"
+  ];
+
+  if (jijelKeywords.some((kw) => normalized.includes(kw))) {
     wilaya = "جيجل";
-  } else if (normalized.includes("بجاية") || normalized.includes("تيشي") || normalized.includes("أوقاس") || normalized.includes("خراطة")) {
+  } else if (bejaiaKeywords.some((kw) => normalized.includes(kw))) {
     wilaya = "بجاية";
-  } else if (normalized.includes("سكيكدة") || normalized.includes("القل") || normalized.includes("تمالوس")) {
-    wilaya = "سكيكدة";
-  } else if (normalized.includes("ميلة") || normalized.includes("فرجيوة") || normalized.includes("شلغوم العيد")) {
+  } else if (setifKeywords.some((kw) => normalized.includes(kw))) {
+    wilaya = "سطيف";
+  } else if (milaKeywords.some((kw) => normalized.includes(kw))) {
     wilaya = "ميلة";
+  } else if (skikdaKeywords.some((kw) => normalized.includes(kw))) {
+    wilaya = "سكيكدة";
   }
 
   // 3. Detect Category Type
   let update_type: IngestedNewsItem["update_type"] = "statement";
-  if (
-    normalized.includes("طريق") ||
-    normalized.includes("مرور") ||
-    normalized.includes("مسلك") ||
-    normalized.includes("شاحنات") ||
-    normalized.includes("حركة السير")
-  ) {
-    update_type = "road_status";
-  } else if (
-    normalized.includes("حريق") ||
-    normalized.includes("بؤرة") ||
-    normalized.includes("إخماد") ||
-    normalized.includes("إطفاء") ||
-    normalized.includes("رتل متحرك") ||
-    normalized.includes("طائرة إطفاء")
-  ) {
+
+  const roadKeywords = [
+    "طريق", "مرور", "مسلك", "شاحنات", "حركة السير", "حركة المرور",
+    "rn43", "rn77", "cw137", "cw135", "طريق وطني", "طريق ولائي", "منعرجات", "طريقي"
+  ];
+
+  const fireKeywords = [
+    "حريق", "حرائق", "بؤرة", "بؤر", "إخماد", "إطفاء", "ألسنة اللهب",
+    "رتل متحرك", "رتل متنقل", "طائرة إطفاء", "طائرات الإخماد", "قاذفات",
+    "بيريف", "be-200", "air tractor", "حماية مدنية", "غابات", "طوفان", "مروحية"
+  ];
+
+  const weatherKeywords = [
+    "نشرية", "أرصاد", "رياح", "سيروكو", "حرارة", "طقس", "درجة مئوية",
+    "bms", "إنذار جوي", "موجة حر", "هبوب رياح", "عواصف"
+  ];
+
+  const safetyKeywords = [
+    "توجيهات", "إرشادات", "سلامة", "وقاية", "إخلاء", "مأوى", "إسعافات أولية",
+    "تجنب المسالك", "تعليمات للمواطنين", "الهلال الأحمر"
+  ];
+
+  if (fireKeywords.some((kw) => normalized.includes(kw))) {
     update_type = "fire_alert";
-  } else if (
-    normalized.includes("نشرية") ||
-    normalized.includes("أرصاد") ||
-    normalized.includes("رياح") ||
-    normalized.includes("سيروكو") ||
-    normalized.includes("حرارة") ||
-    normalized.includes("طقس")
-  ) {
+  } else if (roadKeywords.some((kw) => normalized.includes(kw))) {
+    update_type = "road_status";
+  } else if (weatherKeywords.some((kw) => normalized.includes(kw))) {
     update_type = "weather_warning";
-  } else if (
-    normalized.includes("توجيهات") ||
-    normalized.includes("إرشادات") ||
-    normalized.includes("سلامة") ||
-    normalized.includes("وقاية")
-  ) {
+  } else if (safetyKeywords.some((kw) => normalized.includes(kw))) {
     update_type = "safety_guidelines";
   }
 

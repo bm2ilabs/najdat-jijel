@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -119,7 +119,7 @@ export function MobileBottomNav({ locale }: { locale: AvailableLocale }) {
         locale={locale}
         isOpen={drawerOpen}
         onOpenChange={setDrawerOpen}
-        trigger={<span className="hidden" />}
+        trigger={null}
       />
     </>
   );

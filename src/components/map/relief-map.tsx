@@ -314,48 +314,49 @@ export function ReliefMap({
     <div className="relative h-full w-full overflow-hidden rounded-2xl border border-border/80 shadow-md">
       <div ref={containerRef} className="h-full w-full" />
 
-      {/* Floating Map Controls */}
-      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 rounded-xl bg-background/90 p-1.5 shadow-lg backdrop-blur-md border border-border/70">
+      {/* Floating Map Controls with Large Touch Targets */}
+      <div className="absolute top-3 end-3 z-10 flex flex-col gap-1.5 rounded-2xl bg-background/95 p-1.5 shadow-xl backdrop-blur-md border border-border/80">
         <Button
           type="button"
-          size="icon-sm"
+          size="icon"
           variant="ghost"
           onClick={handleLocateMe}
-          title={isFr ? "Ma position" : "موقعي الحالي"}
+          title={isFr ? "Ma position (GPS)" : "تحديد موقعي الحالي (GPS)"}
           aria-label={isFr ? "Ma position" : "موقعي الحالي"}
-          className="size-8 rounded-lg hover:bg-muted"
+          className="size-10 rounded-xl hover:bg-algeria-green/10 hover:text-algeria-green transition-colors active:scale-95"
         >
-          <Locate className="size-4 text-foreground" />
+          <Locate className="size-5" />
         </Button>
 
         <Button
           type="button"
-          size="icon-sm"
+          size="icon"
           variant="ghost"
           onClick={fitAll}
-          title={isFr ? "Afficher toutes les zones" : "عرض كل النقاط"}
+          title={isFr ? "Afficher toutes les zones" : "عرض كل النقاط في الجزائر"}
           aria-label={isFr ? "Afficher toutes les zones" : "عرض كل النقاط"}
-          className="size-8 rounded-lg hover:bg-muted"
+          className="size-10 rounded-xl hover:bg-muted transition-colors active:scale-95"
         >
-          <Maximize2 className="size-4 text-foreground" />
+          <Maximize2 className="size-5" />
         </Button>
 
         <Button
           type="button"
-          size="icon-sm"
+          size="icon"
           variant="ghost"
           onClick={() => setMapStyle((s) => (s === "standard" ? "humanitarian" : "standard"))}
           title={isFr ? "Changer le style de carte" : "تغيير نمط الخريطة"}
           aria-label={isFr ? "Changer le style de carte" : "تغيير نمط الخريطة"}
-          className="size-8 rounded-lg hover:bg-muted"
+          className="size-10 rounded-xl hover:bg-muted transition-colors active:scale-95"
         >
-          <Layers className="size-4 text-foreground" />
+          <Layers className="size-5" />
         </Button>
       </div>
 
       {userLocation && (
-        <div className="absolute bottom-3 left-3 z-10 rounded-lg bg-background/90 px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-md backdrop-blur-md border border-border/70">
-          📍 {isFr ? "Position détectée" : "تم تحديد موقعك"}
+        <div className="absolute bottom-3 start-3 z-10 rounded-xl bg-background/95 px-3.5 py-2 text-xs font-bold text-algeria-green shadow-lg backdrop-blur-md border border-border/80 flex items-center gap-1.5 animate-in fade-in">
+          <span className="inline-block size-2 rounded-full bg-algeria-green animate-ping" />
+          <span>{isFr ? "Position GPS détectée" : "تم تحديد موقعك بدقة"}</span>
         </div>
       )}
     </div>

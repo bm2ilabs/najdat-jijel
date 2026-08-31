@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -76,22 +76,24 @@ export function MobileNav({ locale, isOpen, onOpenChange, trigger }: MobileNavPr
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      {trigger ? (
-        <SheetTrigger render={trigger as any} />
-      ) : (
-        <SheetTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-10 rounded-xl md:hidden text-foreground hover:bg-muted"
-              aria-label={isFr ? "Menu de navigation" : "قائمة التنقل"}
-            />
-          }
-        >
-          <Menu className="size-5" />
-        </SheetTrigger>
-      )}
+      {trigger !== null &&
+        (trigger ? (
+          <SheetTrigger render={trigger as any} nativeButton={false} />
+        ) : (
+          <SheetTrigger
+            nativeButton={false}
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-10 rounded-xl md:hidden text-foreground hover:bg-muted"
+                aria-label={isFr ? "Menu de navigation" : "قائمة التنقل"}
+              />
+            }
+          >
+            <Menu className="size-5" />
+          </SheetTrigger>
+        ))}
 
       <SheetContent
         side={isRtl ? "right" : "left"}

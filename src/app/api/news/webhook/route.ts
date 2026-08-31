@@ -36,7 +36,8 @@ export async function POST(req: Request) {
     searchParams.get("secret") ||
     searchParams.get("key");
 
-  if (secret && token !== secret) {
+  // بلا سرّ مضبوط نرفض الطلب — قبول أي حمولة يعني حقن أخبار مزيّفة في الموقع.
+  if (!secret || token !== secret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

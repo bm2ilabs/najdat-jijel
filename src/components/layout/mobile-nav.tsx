@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Users,
 } from "lucide-react";
 import {
   Sheet,
@@ -58,6 +59,7 @@ export function MobileNav({ locale, isOpen, onOpenChange, trigger }: MobileNavPr
   ];
 
   const secondaryLinks = [
+    { href: "/volunteers", label: isFr ? "Volontaires de terrain" : "التطوع وسواعد الإغاثة", icon: Users },
     { href: "/affected-areas", label: isFr ? "Zones sinistrées" : "المناطق المتضررة", icon: TriangleAlert },
     { href: "/medical", label: isFr ? "Volontaires médicaux" : "الطواقم الطبية والبيطرية", icon: Stethoscope },
     { href: "/artisans", label: isFr ? "Artisans & Travaux" : "الحرفيون والترميم", icon: Hammer },
@@ -78,21 +80,21 @@ export function MobileNav({ locale, isOpen, onOpenChange, trigger }: MobileNavPr
     <Sheet open={open} onOpenChange={setOpen}>
       {trigger !== null &&
         (trigger ? (
-          <SheetTrigger render={trigger as any} nativeButton={false} />
+          <SheetTrigger render={trigger as any} nativeButton={true} />
         ) : (
           <SheetTrigger
-            nativeButton={false}
+            nativeButton={true}
             render={
               <Button
                 variant="ghost"
                 size="icon"
                 className="size-10 rounded-xl md:hidden text-foreground hover:bg-muted"
                 aria-label={isFr ? "Menu de navigation" : "قائمة التنقل"}
-              />
+              >
+                <Menu className="size-5" />
+              </Button>
             }
-          >
-            <Menu className="size-5" />
-          </SheetTrigger>
+          />
         ))}
 
       <SheetContent

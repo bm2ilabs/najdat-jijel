@@ -829,6 +829,74 @@ export type Database = {
           },
         ]
       }
+      field_volunteers: {
+        Row: {
+          availability: string
+          commune_id: string
+          created_at: string
+          emergency_contact: string | null
+          equipment: string[]
+          full_name: string
+          id: string
+          mobility: string
+          notes: string | null
+          phone: string
+          show_phone_publicly: boolean
+          skills: string[]
+          status: Database["public"]["Enums"]["field_volunteer_status"]
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+          wilaya_code: string
+        }
+        Insert: {
+          availability?: string
+          commune_id: string
+          created_at?: string
+          emergency_contact?: string | null
+          equipment?: string[]
+          full_name: string
+          id?: string
+          mobility?: string
+          notes?: string | null
+          phone: string
+          show_phone_publicly?: boolean
+          skills?: string[]
+          status?: Database["public"]["Enums"]["field_volunteer_status"]
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+          wilaya_code: string
+        }
+        Update: {
+          availability?: string
+          commune_id?: string
+          created_at?: string
+          emergency_contact?: string | null
+          equipment?: string[]
+          full_name?: string
+          id?: string
+          mobility?: string
+          notes?: string | null
+          phone?: string
+          show_phone_publicly?: boolean
+          skills?: string[]
+          status?: Database["public"]["Enums"]["field_volunteer_status"]
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+          wilaya_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_volunteers_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emergency_sos: {
         Row: {
           created_at: string
@@ -1906,6 +1974,7 @@ export type Database = {
         | "completed"
         | "rejected"
       donation_status: "registered" | "matched" | "delivered" | "cancelled"
+      field_volunteer_status: "pending" | "verified" | "deployed" | "inactive"
       inventory_txn_type: "in" | "out" | "adjustment" | "transfer"
       medical_verification_status: "pending" | "verified" | "rejected"
       need_status: "active" | "resolved" | "expired"
@@ -2108,6 +2177,7 @@ export const Constants = {
         "rejected",
       ],
       donation_status: ["registered", "matched", "delivered", "cancelled"],
+      field_volunteer_status: ["pending", "verified", "deployed", "inactive"],
       inventory_txn_type: ["in", "out", "adjustment", "transfer"],
       medical_verification_status: ["pending", "verified", "rejected"],
       need_status: ["active", "resolved", "expired"],

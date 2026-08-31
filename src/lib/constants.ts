@@ -584,6 +584,72 @@ export function getDamageAssessmentStatusLabel(
   return localizedDamageAssessmentStatusLabels[locale]?.[status] ?? damageAssessmentStatusLabels[status];
 }
 
+export type FieldVolunteerStatus = Database["public"]["Enums"]["field_volunteer_status"];
+
+export const fieldVolunteerStatusLabels: Record<FieldVolunteerStatus, string> = {
+  pending: "قيد المراجعة",
+  verified: "معتمد وموثّق",
+  deployed: "في الميدان (نشط)",
+  inactive: "غير متاح حاليًا",
+};
+
+export const localizedFieldVolunteerStatusLabels: Record<
+  AvailableLocale,
+  Record<FieldVolunteerStatus, string>
+> = {
+  ar: {
+    pending: "قيد المراجعة",
+    verified: "معتمد وموثّق",
+    deployed: "في الميدان (نشط)",
+    inactive: "غير متاح حاليًا",
+  },
+  fr: {
+    pending: "En attente",
+    verified: "Vérifié & Validé",
+    deployed: "Sur le terrain (Actif)",
+    inactive: "Indisponible",
+  },
+};
+
+export function getFieldVolunteerStatusLabel(
+  status: FieldVolunteerStatus,
+  locale: AvailableLocale = "ar",
+): string {
+  return localizedFieldVolunteerStatusLabels[locale]?.[status] ?? fieldVolunteerStatusLabels[status];
+}
+
+export const fieldVolunteerSkillLabels: Record<string, { ar: string; fr: string }> = {
+  sorting_packaging: { ar: "فرز وتغليف المساعدات بمراكز التجميع", fr: "Tri & conditionnement des dons" },
+  loading_unloading: { ar: "شحن وتفريغ الشاحنات والمساعدات", fr: "Chargement & déchargement" },
+  distribution: { ar: "توزيع المساعدات على الأسر ومراكز الإيواء", fr: "Distribution aux familles & hébergements" },
+  debris_clearing: { ar: "تنظيف وإزالة الركام ومخلفات الحرائق", fr: "Nettoyage & déblaiement" },
+  cooking_prep: { ar: "إعداد وتحضير الوجبات للمتضررين", fr: "Préparation des repas d'urgence" },
+  local_scouting: { ar: "دليل محلي ومعرفة بالمسالك الجبلية والقرى", fr: "Guide local & orientation terrain" },
+  first_aid: { ar: "إسعافات أولية ودعم ميداني", fr: "Premiers secours & assistance" },
+  general: { ar: "مساعدة عامة حيثما دعت الحاجة", fr: "Aide générale selon besoin" },
+};
+
+export const fieldVolunteerMobilityLabels: Record<string, { ar: string; fr: string }> = {
+  has_4x4: { ar: "أملك سيارة رباعية الدفع (4x4)", fr: "Véhicule 4x4 tout-terrain" },
+  has_car: { ar: "أملك سيارة سياحية خاصة", fr: "Voiture personnelle" },
+  has_motorcycle: { ar: "أملك دراجة نارية", fr: "Moto" },
+  needs_transport: { ar: "أحتاج وسيلة تنقل للوصول للميدان", fr: "Besoin de transport" },
+  none: { ar: "سأتواجد بمقر التجميع القريب مشيًا", fr: "Présent à pied au centre local" },
+};
+
+export const fieldVolunteerAvailabilityLabels: Record<string, { ar: string; fr: string }> = {
+  immediate: { ar: "متاح فورًا (اليوم)", fr: "Disponible immédiatement" },
+  weekend: { ar: "خلال عطلة نهاية الأسبوع", fr: "Fins de semaine" },
+  specific_days: { ar: "أيام محددة في الأسبوع", fr: "Jours spécifiques" },
+  on_call: { ar: "حسب النداء والطوارئ", fr: "Sur appel d'urgence" },
+};
+
+export const fieldVolunteerEquipmentLabels: Record<string, { ar: string; fr: string }> = {
+  safety_boots: { ar: "أحذية أمان قوية", fr: "Chaussures de sécurité" },
+  gloves: { ar: "قفازات عمل متينة", fr: "Gants de protection" },
+  tools_shovels: { ar: "أدوات حفر ومجارف", fr: "Pelles & outils manuels" },
+  first_aid_kit: { ar: "حقيبة إسعاف أولية", fr: "Trousse de premiers secours" },
+};
 
 export const localizedCategoryLabels: Record<AvailableLocale, Record<string, string>> = {
   ar: {

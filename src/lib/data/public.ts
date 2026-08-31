@@ -234,3 +234,14 @@ export async function getPublicMedicalVolunteers() {
     return [];
   }
 }
+
+export async function getPublicFieldVolunteers() {
+  try {
+    const supabase = await createClient();
+    const { data } = await (supabase as any).rpc("get_public_field_volunteers");
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+

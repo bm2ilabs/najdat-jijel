@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
-import { HeartHandshake, Sparkles } from "lucide-react";
+import { HeartHandshake } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { LoginForm } from "./login-form";
 
@@ -25,16 +24,6 @@ export default function AdminLoginPage() {
         <Suspense fallback={null}>
           <LoginForm />
         </Suspense>
-
-        <div className="text-center">
-          <a
-            href="/api/admin/demo-login"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-action-deep hover:underline"
-          >
-            <Sparkles className="size-3.5 text-action" />
-            <span>رابط مباشر للدخول التجريبي السريع (بدون نموذج)</span>
-          </a>
-        </div>
       </div>
     </div>
   );

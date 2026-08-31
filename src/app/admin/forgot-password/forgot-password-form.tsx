@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,13 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { createClient } from "@/lib/supabase/client";
 
-export function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,18 +21,34 @@ export function LoginForm() {
     setError(null);
 
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/admin/reset-password`,
+    });
 
-    if (signInError) {
-      setError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
-      setLoading(false);
+    setLoading(false);
+    // نعرض نفس الرسالة سواء وُجد الحساب أم لا — لا نكشف عن وجود بريد إلكتروني معيّن في النظام.
+    if (resetError) {
+      setError("حدث خطأ، حاول مرة أخرى بعد قليل.");
       return;
     }
+    setSent(true);
+  }
 
-    const next = searchParams.get("next");
-    const safeNext = next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/admin";
-    router.replace(safeNext);
-    router.refresh();
+  if (sent) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center gap-3 px-6 py-8 text-center">
+          <span className="flex size-11 items-center justify-center rounded-full bg-algeria-green/15 text-algeria-green">
+            <MailCheck className="size-5" />
+          </span>
+          <p className="font-bold">تحقّق من بريدك الإلكتروني</p>
+          <p className="text-sm text-muted-foreground">
+            إذا كان البريد {email} مسجَّلًا لدينا، وصلك رابط لإعادة تعيين كلمة المرور — قد تستغرق
+            الرسالة بضع دقائق، وتحقّق من مجلد الرسائل غير المرغوبة (Spam).
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -53,21 +65,6 @@ export function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <Label>كلمة المرور</Label>
-              <Link href="/admin/forgot-password" className="text-xs font-medium text-algeria-green hover:underline">
-                نسيت كلمة المرور؟
-              </Link>
-            </div>
-            <Input
-              type="password"
-              dir="ltr"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
 
           {error && (
             <Alert variant="destructive">
@@ -77,7 +74,7 @@ export function LoginForm() {
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="size-4 animate-spin" />}
-            تسجيل الدخول
+            إرسال رابط إعادة التعيين
           </Button>
         </form>
       </CardContent>

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { syncOfficialNews, OFFICIAL_ALGERIAN_SOURCES } from "@/lib/services/news-ingestion";
+import { createClient } from "@/lib/supabase/server";
 
-function isAuthorized(req: Request): boolean {
+const staffRoles = ["admin", "coordinator", "volunteer"];
+
+function isAuthorizedByToken(req: Request): boolean {
   const cronSecret = process.env.CRON_SECRET || process.env.WEBHOOK_SECRET;
   if (!cronSecret) return true;
 
@@ -14,8 +17,23 @@ function isAuthorized(req: Request): boolean {
   return token === cronSecret;
 }
 
+/** يقبل إمّا رمز الخدمة السرّي (Cron/webhook خارجي) أو جلسة عضو طاقم مسجَّل دخوله
+ *  (زر "مزامنة المصادر الآن" داخل لوحة الإدارة). */
+async function isAuthorized(req: Request): Promise<boolean> {
+  if (isAuthorizedByToken(req)) return true;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  return !!profile && staffRoles.includes(profile.role);
+}
+
 export async function GET(req: Request) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -30,7 +48,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

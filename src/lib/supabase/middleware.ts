@@ -28,9 +28,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdminRoute =
-    request.nextUrl.pathname.startsWith("/admin") &&
-    request.nextUrl.pathname !== "/admin/login";
+  // مسارات إدارية متاحة للعامة دون تسجيل دخول — صفحة الدخول نفسها، وصفحتا
+  // استرجاع/إعادة تعيين كلمة المرور (يصل إليهما مستخدم غير مسجَّل دخوله أصلًا،
+  // وصفحة إعادة التعيين تُنشئ جلسة استرجاع مؤقتة من رابط البريد بنفسها).
+  const publicAdminRoutes = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
+  const isPublicAdminRoute = publicAdminRoutes.includes(request.nextUrl.pathname);
+  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin") && !isPublicAdminRoute;
 
   if (isAdminRoute && !user) {
     const loginUrl = new URL("/admin/login", request.url);

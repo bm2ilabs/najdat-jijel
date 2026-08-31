@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logActivity } from "@/services/activity-log";
 import { roleLabels, type AppRole } from "@/lib/constants";
+import { siteConfig } from "@/config/site";
 
 const staffRoles = ["admin", "coordinator", "volunteer"] as const;
 
@@ -132,4 +133,44 @@ export async function deleteStaffUser(id: string) {
 
 export async function listStaffRoles(): Promise<AppRole[]> {
   return [...staffRoles];
+}
+
+/**
+ * يرسل رابط إعادة تعيين كلمة المرور لعضو موجود — مفيد عندما ينسى أحد الأدمن أو
+ * الطاقم كلمة مروره ولا يستطيع الدخول بنفسه لطلب ذلك من /admin/forgot-password.
+ * الأدمن فقط يستطيع تفعيل هذا لعضو آخر غير نفسه (لنفسه يستعمل صفحة نسيت كلمة المرور).
+ */
+export async function sendPasswordResetLink(targetUserId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false as const, error: "يجب تسجيل الدخول." };
+
+  const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  if (me?.role !== "admin") {
+    return { success: false as const, error: "إرسال رابط إعادة التعيين متاح لحسابات الأدمن فقط." };
+  }
+
+  const admin = createAdminClient();
+  const { data: target, error: fetchError } = await admin.auth.admin.getUserById(targetUserId);
+  if (fetchError || !target?.user?.email) {
+    return { success: false as const, error: "تعذر العثور على البريد الإلكتروني لهذا الحساب." };
+  }
+
+  const { error: resetError } = await admin.auth.resetPasswordForEmail(target.user.email, {
+    redirectTo: `${siteConfig.url}/admin/reset-password`,
+  });
+  if (resetError) {
+    return { success: false as const, error: "تعذر إرسال رابط إعادة التعيين." };
+  }
+
+  await logActivity(supabase, {
+    actorId: user.id,
+    action: `أرسل رابط إعادة تعيين كلمة مرور لمستخدم`,
+    entityType: "profile",
+    entityId: targetUserId,
+  });
+
+  return { success: true as const, email: target.user.email };
 }

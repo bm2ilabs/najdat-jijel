@@ -3,6 +3,7 @@ import { HeartHandshake, LifeBuoy, Gift } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { LinkButton } from "@/components/shared/link-button";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getLocale } from "@/i18n/server";
 
@@ -23,12 +24,15 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg shrink-0">
-          <span className="flex size-9 items-center justify-center rounded-full bg-algeria-green text-algeria-green-foreground">
-            <HeartHandshake className="size-5" />
-          </span>
-          <span>{siteConfig.shortName}</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <MobileNav locale={locale} />
+          <Link href="/" className="flex items-center gap-2 font-bold text-lg shrink-0">
+            <span className="flex size-9 items-center justify-center rounded-full bg-algeria-green text-algeria-green-foreground">
+              <HeartHandshake className="size-5" />
+            </span>
+            <span className="truncate max-w-[160px] sm:max-w-none">{siteConfig.shortName}</span>
+          </Link>
+        </div>
 
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
@@ -43,11 +47,13 @@ export async function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <LanguageSwitcher current={locale} label={t.language.change} />
-          <LinkButton href="/help" size="sm" variant="outline" className="hidden sm:inline-flex">
+          <div className="hidden sm:block">
+            <LanguageSwitcher current={locale} label={t.language.change} />
+          </div>
+          <LinkButton href="/help" size="sm" variant="outline" className="hidden md:inline-flex">
             <LifeBuoy className="size-4" /> {t.cta.needHelp}
           </LinkButton>
-          <LinkButton href="/donate" size="sm">
+          <LinkButton href="/donate" size="sm" className="hidden sm:inline-flex">
             <Gift className="size-4" /> {t.cta.haveAid}
           </LinkButton>
         </div>

@@ -1,79 +1,126 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, TriangleAlert, MapPin, Gift, Stethoscope } from "lucide-react";
+import { Home, MapPin, LifeBuoy, Gift, Menu } from "lucide-react";
+import { MobileNav } from "./mobile-nav";
+import type { AvailableLocale } from "@/i18n/locales";
 import { cn } from "@/lib/utils";
 
-export interface MobileBottomNavLabels {
-  home: string;
-  officialInfo?: string;
-  haveAid: string;
-  map: string;
-  medical?: string;
-}
-
-export function MobileBottomNav({ labels }: { labels?: MobileBottomNavLabels }) {
+export function MobileBottomNav({ locale }: { locale: AvailableLocale }) {
   const pathname = usePathname();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const isFr = locale === "fr";
+
+  // Hide bottom nav on admin routes
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   const items = [
-    { href: "/", label: labels?.home || "الرئيسية", icon: Home },
-    { href: "/official-information", label: labels?.officialInfo || "البيانات", icon: TriangleAlert },
-    { href: "/donate", label: labels?.haveAid || "تقديم عون", icon: Gift, isPrimary: true },
-    { href: "/map", label: labels?.map || "الخريطة", icon: MapPin },
-    { href: "/medical", label: labels?.medical || "الأطباء", icon: Stethoscope },
+    {
+      href: "/",
+      label: isFr ? "Accueil" : "الرئيسية",
+      icon: Home,
+      active: pathname === "/",
+    },
+    {
+      href: "/map",
+      label: isFr ? "Carte" : "الخريطة",
+      icon: MapPin,
+      active: pathname === "/map",
+    },
+    {
+      href: "/help",
+      label: isFr ? "Urgence" : "طلب إغاثة",
+      icon: LifeBuoy,
+      active: pathname === "/help" || pathname?.startsWith("/help/"),
+      isCta: true,
+    },
+    {
+      href: "/donate",
+      label: isFr ? "Dons" : "مساعدات",
+      icon: Gift,
+      active: pathname === "/donate",
+    },
   ];
 
-  if (pathname?.startsWith("/admin")) return null;
-
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/90 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur-xl supports-backdrop-filter:bg-background/80 md:hidden">
-      <div className="grid grid-cols-5 items-center px-1">
-        {items.map((item) => {
-          const active = pathname === item.href;
-          const Icon = item.icon;
+    <>
+      <nav
+        aria-label={isFr ? "Navigation mobile" : "التنقل السفلي"}
+        className="fixed bottom-0 inset-x-0 z-40 block md:hidden border-t border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/85 safe-area-pb shadow-lg"
+      >
+        <div className="flex h-16 items-center justify-around px-2">
+          {items.map((item) => {
+            const Icon = item.icon;
+            if (item.isCta) {
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex flex-col items-center justify-center -mt-4 relative group"
+                >
+                  <div
+                    className={cn(
+                      "flex size-12 items-center justify-center rounded-full bg-priority-critical text-white shadow-md transition-transform active:scale-95",
+                      item.active && "ring-4 ring-priority-critical/30 scale-105"
+                    )}
+                  >
+                    <Icon className="size-6 animate-pulse" />
+                  </div>
+                  <span className="mt-1 text-[10px] font-bold text-priority-critical truncate">
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            }
 
-          if (item.isPrimary) {
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group relative -top-3 flex flex-col items-center justify-center"
-              >
-                <span className="flex size-12 items-center justify-center rounded-full bg-algeria-green text-white shadow-lg shadow-algeria-green/30 ring-4 ring-background transition-transform duration-200 active:scale-95 group-hover:scale-105">
-                  <Icon className="size-5" />
-                </span>
-                <span className="mt-1 text-[10px] font-extrabold text-algeria-green">
-                  {item.label}
-                </span>
-              </Link>
-            );
-          }
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold transition-all active:scale-95",
-                active
-                  ? "text-algeria-green font-extrabold"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <span
                 className={cn(
-                  "flex size-7 items-center justify-center rounded-xl transition-all",
-                  active && "bg-algeria-green/15 text-algeria-green scale-110",
+                  "flex flex-1 flex-col items-center justify-center py-1 text-center transition-colors min-h-[48px]",
+                  item.active
+                    ? "text-algeria-green font-bold"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className="size-4" />
-              </span>
-              <span className="truncate max-w-[64px]">{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                <Icon className="size-5" />
+                <span className="mt-1 text-[10px] font-semibold leading-none truncate">
+                  {item.label}
+                </span>
+                {item.active && (
+                  <span className="mt-0.5 size-1 rounded-full bg-algeria-green" />
+                )}
+              </Link>
+            );
+          })}
+
+          {/* More Drawer Trigger */}
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            className="flex flex-1 flex-col items-center justify-center py-1 text-center text-muted-foreground hover:text-foreground transition-colors min-h-[48px] cursor-pointer"
+            aria-label={isFr ? "Plus de services" : "المزيد من الخدمات"}
+          >
+            <Menu className="size-5" />
+            <span className="mt-1 text-[10px] font-semibold leading-none truncate">
+              {isFr ? "Plus" : "المزيد"}
+            </span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Hidden MobileNav Drawer instance controlled by the bottom nav button */}
+      <MobileNav
+        locale={locale}
+        isOpen={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        trigger={null}
+      />
+    </>
   );
 }

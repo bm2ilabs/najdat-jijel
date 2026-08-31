@@ -21,6 +21,10 @@ import {
 import { SuccessPanel } from "@/components/shared/success-panel";
 import { submitBeneficiaryRequest } from "@/actions/beneficiary-requests";
 import { campaignWilayas } from "@/config/site";
+import { WilayaSelect } from "@/components/ui/wilaya-select";
+import { CommuneSelect } from "@/components/ui/commune-select";
+import { priorityWilayas } from "@/lib/algeria-cities";
+import { cn } from "@/lib/utils";
 import type { AvailableLocale } from "@/i18n/locales";
 
 const categoryLabelsFr: Record<string, string> = {
@@ -167,39 +171,75 @@ export function HelpRequestForm({
           </div>
           <div>
             <Label className="mb-1.5">{isFr ? "Numéro de téléphone" : "رقم الهاتف"}</Label>
-            <Input dir="ltr" placeholder="0555xxxxxx" {...register("phone")} />
+            <Input
+              dir="ltr"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="0555xxxxxx"
+              className="h-11 rounded-xl"
+              {...register("phone")}
+            />
             {errors.phone && <p className="mt-1 text-sm text-destructive">{errors.phone.message}</p>}
           </div>
           <div>
-            <Label className="mb-2">{isFr ? "Wilaya" : "الولاية"}</Label>
-            <div className="flex flex-wrap gap-2">
-              {campaignWilayas.map((w) => {
-                const active = watch("wilaya") === w;
+            <Label className="mb-2 flex items-center justify-between">
+              <span>{isFr ? "Wilaya *" : "الولاية *"}</span>
+              <span className="text-xs font-bold text-priority-critical flex items-center gap-1">
+                <span className="inline-block size-1.5 rounded-full bg-priority-critical animate-pulse" />
+                {isFr ? "Zones sinistrées prioritaires" : "المناطق المتضررة ذات الأولوية"}
+              </span>
+            </Label>
+            
+            {/* Quick Priority Wilaya Buttons with distinct emergency colors */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {priorityWilayas.map((pw) => {
+                const active = watch("wilaya") === pw.name_ar;
                 return (
                   <button
-                    key={w}
+                    key={pw.code}
                     type="button"
                     aria-pressed={active}
-                    onClick={() => setValue("wilaya", w, { shouldValidate: true })}
-                    className={
+                    onClick={() => {
+                      setValue("wilaya", pw.name_ar, { shouldValidate: true });
+                      setValue("commune", "");
+                    }}
+                    className={cn(
+                      "rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       active
-                        ? "rounded-full border border-algeria-green bg-algeria-green px-4 py-1.5 text-sm font-semibold text-algeria-green-foreground"
-                        : "rounded-full border border-border bg-card px-4 py-1.5 text-sm hover:border-algeria-green/50 hover:bg-muted"
-                    }
+                        ? "border-priority-critical bg-priority-critical text-white shadow-sm scale-105"
+                        : "border-priority-critical/30 bg-priority-critical/10 text-priority-critical hover:bg-priority-critical/20",
+                    )}
                   >
-                    {isFr ? `Wilaya de ${w}` : w}
+                    <span>⚡</span>
+                    <span>{isFr ? `${pw.codeStr} - ${pw.name_fr}` : `${pw.codeStr} - ${pw.name_ar}`}</span>
                   </button>
                 );
               })}
             </div>
+
+            {/* Complete Wilaya Select Dropdown */}
+            <WilayaSelect
+              locale={locale}
+              value={watch("wilaya")}
+              onChange={(e) => {
+                setValue("wilaya", e.target.value, { shouldValidate: true });
+                setValue("commune", "");
+              }}
+            />
             {errors.wilaya && (
               <p className="mt-1 text-sm text-destructive">{errors.wilaya.message}</p>
             )}
           </div>
 
           <div>
-            <Label className="mb-1.5">{isFr ? "Commune" : "البلدية"}</Label>
-            <Input {...register("commune")} />
+            <Label className="mb-1.5">{isFr ? "Commune *" : "البلدية *"}</Label>
+            <CommuneSelect
+              wilaya={watch("wilaya")}
+              locale={locale}
+              value={watch("commune")}
+              onChange={(e) => setValue("commune", e.target.value, { shouldValidate: true })}
+            />
             {errors.commune && (
               <p className="mt-1 text-sm text-destructive">{errors.commune.message}</p>
             )}
@@ -312,15 +352,27 @@ export function HelpRequestForm({
         <CardContent className="space-y-4 px-5">
           <h2 className="font-bold">{isFr ? "De quoi la famille a-t-elle besoin ?" : "ما الذي تحتاجه الأسرة؟"}</h2>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {needCategoryOptions.map((opt) => (
-              <label key={opt.value} className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={neededCategories?.includes(opt.value)}
-                  onCheckedChange={() => toggleCategory(opt.value)}
-                />
-                {isFr ? (categoryLabelsFr[opt.value] ?? opt.label) : opt.label}
-              </label>
-            ))}
+            {needCategoryOptions.map((opt) => {
+              const active = neededCategories?.includes(opt.value);
+              return (
+                <label
+                  key={opt.value}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-xl border p-3 text-xs font-semibold transition-all cursor-pointer min-h-[48px] active:scale-98",
+                    active
+                      ? "border-algeria-green bg-algeria-green/10 text-foreground font-bold shadow-xs ring-1 ring-algeria-green/30"
+                      : "border-border bg-card/60 hover:bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Checkbox
+                    checked={active}
+                    onCheckedChange={() => toggleCategory(opt.value)}
+                    className="data-[state=checked]:bg-algeria-green data-[state=checked]:border-algeria-green"
+                  />
+                  <span className="leading-tight">{isFr ? (categoryLabelsFr[opt.value] ?? opt.label) : opt.label}</span>
+                </label>
+              );
+            })}
           </div>
           {errors.needed_categories && (
             <p className="text-sm text-destructive">{errors.needed_categories.message}</p>

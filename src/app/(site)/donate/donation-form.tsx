@@ -24,6 +24,8 @@ import { donationSchema, unitOptions, type DonationInput } from "@/schemas/donat
 import { formatQuantity, getUnitLabel, getCategoryLabel } from "@/lib/constants";
 import { CategoryIcon } from "@/components/shared/category-icon";
 import { wilayaNames } from "@/lib/wilayas";
+import { WilayaSelect } from "@/components/ui/wilaya-select";
+import { CommuneSelect } from "@/components/ui/commune-select";
 import { SuccessPanel } from "@/components/shared/success-panel";
 import { submitDonation, type SubmitDonationResult } from "@/actions/donations";
 import type { Database } from "@/types/database";
@@ -334,21 +336,14 @@ export function DonationForm({
 
           <div>
             <Label className="mb-1.5">{isFr ? "Wilaya actuelle" : "الولاية الحالية"}</Label>
-            <Select
+            <WilayaSelect
+              locale={locale}
               value={watch("current_wilaya")}
-              onValueChange={(v: string | null) => v && setValue("current_wilaya", v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={isFr ? "Sélectionnez la wilaya" : "اختر الولاية"} />
-              </SelectTrigger>
-              <SelectContent className="max-h-72">
-                {wilayaNames.map((w) => (
-                  <SelectItem key={w} value={w}>
-                    {w}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(e) => {
+                setValue("current_wilaya", e.target.value);
+                setValue("current_commune", "");
+              }}
+            />
             {errors.current_wilaya && (
               <p className="mt-1 text-sm text-destructive">{errors.current_wilaya.message}</p>
             )}
@@ -356,7 +351,12 @@ export function DonationForm({
 
           <div>
             <Label className="mb-1.5">{isFr ? "Commune / Quartier (facultatif)" : "البلدية / الحي (اختياري)"}</Label>
-            <Input {...register("current_commune")} />
+            <CommuneSelect
+              wilaya={watch("current_wilaya")}
+              locale={locale}
+              value={watch("current_commune")}
+              onChange={(e) => setValue("current_commune", e.target.value)}
+            />
           </div>
 
           <label className="flex items-center gap-2 text-sm">

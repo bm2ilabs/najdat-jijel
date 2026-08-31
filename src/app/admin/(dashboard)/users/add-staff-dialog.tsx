@@ -87,7 +87,7 @@ export function AddStaffDialog() {
         {created ? (
           <>
             <DialogHeader>
-              <DialogTitle>تم إنشاء الحساب</DialogTitle>
+              <DialogTitle>تم إنشاء الحساب ✅</DialogTitle>
               <DialogDescription>
                 سلّم هذه البيانات للعضو الجديد الآن — لن تظهر كلمة المرور مرة أخرى.
               </DialogDescription>

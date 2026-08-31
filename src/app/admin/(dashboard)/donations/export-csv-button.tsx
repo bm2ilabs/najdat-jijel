@@ -18,16 +18,16 @@ type Donation = Database["public"]["Tables"]["donations"]["Row"] & {
 const columns: CsvColumn<Donation>[] = [
   { header: "اسم المتبرع", value: (d) => d.donor_name ?? "" },
   { header: "الهاتف", value: (d) => d.donor_phone ?? "" },
-  { header: "الحالة", value: (d) => donationStatusLabels[d.status] },
+  { header: "الحالة", value: (d) => donationStatusLabels[d.status] ?? d.status },
   { header: "الولاية", value: (d) => d.current_wilaya ?? "" },
   { header: "البلدية", value: (d) => d.current_commune ?? "" },
   {
     header: "المواد",
     value: (d) =>
-      d.donation_items?.map((it) => `${it.categories?.name_ar ?? ""} ${it.quantity} ${unitLabels[it.unit]}`).join("؛ ") ?? "",
+      d.donation_items?.map((it) => `${it.categories?.name_ar ?? ""} ${it.quantity} ${unitLabels[it.unit] ?? it.unit ?? ""}`.trim()).join("؛ ") ?? "",
   },
   { header: "نقطة التسليم", value: (d) => d.collection_points?.name ?? "" },
-  { header: "تاريخ التسجيل", value: (d) => new Date(d.created_at).toLocaleString("ar-DZ") },
+  { header: "تاريخ التسجيل", value: (d) => d.created_at ? new Date(d.created_at).toLocaleString("ar-DZ") : "" },
 ];
 
 export function ExportDonationsCsvButton({ rows }: { rows: Donation[] }) {

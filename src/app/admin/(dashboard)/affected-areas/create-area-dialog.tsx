@@ -25,7 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { wilayaNames } from "@/lib/wilayas";
+import { WilayaSelect } from "@/components/ui/wilaya-select";
+import { CommuneSelect } from "@/components/ui/commune-select";
 import { createAffectedArea } from "@/actions/affected-areas";
 import type { AffectedSeverity } from "@/lib/constants";
 
@@ -98,34 +99,31 @@ export function CreateAreaDialog() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="mb-1.5">الولاية</Label>
-              <Select
+              <WilayaSelect
                 value={watch("wilaya")}
-                onValueChange={(v: string | null) => v && setValue("wilaya", v)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="اختر الولاية" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {wilayaNames.map((w) => (
-                    <SelectItem key={w} value={w}>
-                      {w}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => {
+                  setValue("wilaya", e.target.value);
+                  setValue("commune", "");
+                }}
+              />
+              {errors.wilaya && <p className="mt-1 text-xs text-destructive">{errors.wilaya.message}</p>}
             </div>
             <div>
-              <Label className="mb-1.5">الدائرة</Label>
-              <Input {...register("daira")} placeholder="مثال: الشقفة" />
-              {errors.daira && <p className="mt-1 text-xs text-destructive">{errors.daira.message}</p>}
+              <Label className="mb-1.5">البلدية</Label>
+              <CommuneSelect
+                wilaya={watch("wilaya")}
+                value={watch("commune")}
+                onChange={(e) => setValue("commune", e.target.value)}
+              />
+              {errors.commune && <p className="mt-1 text-xs text-destructive">{errors.commune.message}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="mb-1.5">البلدية</Label>
-              <Input {...register("commune")} placeholder="مثال: برج الطهر" />
-              {errors.commune && <p className="mt-1 text-xs text-destructive">{errors.commune.message}</p>}
+              <Label className="mb-1.5">الدائرة (اختياري)</Label>
+              <Input {...register("daira")} placeholder="مثال: الشقفة" />
+              {errors.daira && <p className="mt-1 text-xs text-destructive">{errors.daira.message}</p>}
             </div>
             <div>
               <Label className="mb-1.5">اسم البؤرة / القرية</Label>

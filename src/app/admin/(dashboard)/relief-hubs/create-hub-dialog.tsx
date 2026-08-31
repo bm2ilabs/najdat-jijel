@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Loader2, Circle } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -152,8 +152,7 @@ export function CreateHubDialog() {
               checked={watch("is_shelter")}
               onCheckedChange={(v) => setValue("is_shelter", Boolean(v))}
             />
-            هذا المركز يُستخدم أيضًا كمركز إيواء
-            <Circle className="size-2.5 text-purple-500" fill="currentColor" aria-hidden />
+            هذا المركز يُستخدم أيضًا كمركز إيواء 🟣
           </label>
 
           <div>

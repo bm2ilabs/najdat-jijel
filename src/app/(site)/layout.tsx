@@ -18,15 +18,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <SiteHeader />
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
       <SiteFooter />
-      <MobileBottomNav
-        labels={{
-          home: t.nav.home,
-          officialInfo: locale === "fr" ? "Bulletins" : "البيانات",
-          haveAid: locale === "fr" ? "Donner" : "تقديم عون",
-          map: t.nav.map,
-          medical: locale === "fr" ? "Médecins" : "الأطباء",
-        }}
-      />
+      <MobileBottomNav locale={locale} />
       <EmergencyFab locale={locale} />
       <GoogleAnalytics />
       <WelcomeDialog locale={locale} />

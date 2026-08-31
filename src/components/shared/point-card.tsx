@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MapPin, Clock, Phone, Navigation, Home, Package } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PointStatusBadge } from "@/components/shared/status-badge";
@@ -58,9 +59,15 @@ const kindDot: Record<PointCardData["kind"], string> = {
 export function PointCard({
   point,
   locale = "ar",
+  isSelected = false,
+  onShowOnMap,
+  className,
 }: {
   point: PointCardData;
   locale?: AvailableLocale;
+  isSelected?: boolean;
+  onShowOnMap?: (point: PointCardData) => void;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const { detail, source } = splitNeedNotes(point.notes);
@@ -80,54 +87,82 @@ export function PointCard({
     <>
       <Card
         onClick={() => setOpen(true)}
-        className="group h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-algeria-green/50 hover:shadow-md"
+        className={cn(
+          "group h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md",
+          isSelected
+            ? "border-2 border-algeria-green bg-algeria-green/5 shadow-md ring-2 ring-algeria-green/20"
+            : "hover:border-algeria-green/50",
+          className,
+        )}
       >
-        <CardContent className="space-y-2 px-5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                <span className={`size-2 rounded-full ${kindDot[point.kind]}`} aria-hidden />
-                {kindLabel}
-              </p>
-              <p className="mt-0.5 font-bold leading-tight">{point.name}</p>
+        <CardContent className="flex h-full flex-col justify-between space-y-2 px-5 py-4">
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                  <span className={`size-2.5 rounded-full ${kindDot[point.kind]}`} aria-hidden />
+                  {kindLabel}
+                </p>
+                <p className="mt-1 font-bold leading-tight text-foreground group-hover:text-algeria-green transition-colors">
+                  {point.name}
+                </p>
+              </div>
+              <PointStatusBadge status={point.status} locale={locale} />
             </div>
-            <PointStatusBadge status={point.status} locale={locale} />
+
+            <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/80" />
+              {point.address ?? `${point.commune}، ${wilayaText}`}
+            </p>
+
+            {point.openingHours && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="size-3.5 shrink-0" /> {point.openingHours}
+              </p>
+            )}
+
+            {point.acceptedCategories && point.acceptedCategories.length > 0 && (
+              <p className="flex flex-wrap gap-1 text-base" aria-label={isFr ? "Articles acceptés" : "المواد المقبولة"}>
+                {point.acceptedCategories.map((slug) => (
+                  <span key={slug} title={getCategoryName(slug, slug, locale)}>
+                    <CategoryIcon slug={slug} className="size-4" />
+                  </span>
+                ))}
+              </p>
+            )}
           </div>
 
-          <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="mt-0.5 size-3.5 shrink-0" />
-            {point.address ?? `${point.commune}، ${wilayaText}`}
-          </p>
-
-          {point.openingHours && (
-            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Clock className="size-3.5 shrink-0" /> {point.openingHours}
-            </p>
-          )}
-
-          {point.acceptedCategories && point.acceptedCategories.length > 0 && (
-            <p className="flex flex-wrap gap-1 text-base" aria-label={isFr ? "Articles acceptés" : "المواد المقبولة"}>
-              {point.acceptedCategories.map((slug) => (
-                <span key={slug} title={getCategoryName(slug, slug, locale)}>
-                  <CategoryIcon slug={slug} className="size-4" />
-                </span>
-              ))}
-            </p>
-          )}
-
-          <div className="flex items-center justify-between gap-2 pt-1">
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
             <VerificationBadge level={point.verificationLevel} locale={locale} />
-            {point.phone && (
-              <a
-                href={`tel:${point.phone.replace(/\s/g, "")}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 text-sm font-semibold text-algeria-green hover:underline"
-                dir="ltr"
-              >
-                <Phone className="size-3.5" />
-                {point.phone}
-              </a>
-            )}
+
+            <div className="flex items-center gap-2">
+              {onShowOnMap && point.lat !== null && point.lng !== null && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShowOnMap(point);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-md bg-muted/80 px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-algeria-green hover:text-white transition-colors"
+                  title={isFr ? "Voir sur la carte" : "عرض على الخريطة"}
+                >
+                  <Navigation className="size-3" />
+                  <span>{isFr ? "Carte" : "الخريطة"}</span>
+                </button>
+              )}
+
+              {point.phone && (
+                <a
+                  href={`tel:${point.phone.replace(/\s/g, "")}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 text-sm font-semibold text-algeria-green hover:underline"
+                  dir="ltr"
+                >
+                  <Phone className="size-3.5" />
+                  {point.phone}
+                </a>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

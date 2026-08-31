@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CategoryIcon } from "@/components/shared/category-icon";
+import { categoryEmoji } from "@/lib/constants";
 import { wilayaNames } from "@/lib/wilayas";
 import { createCollectionPoint } from "@/actions/points";
 import type { Database } from "@/types/database";
@@ -176,7 +176,7 @@ export function CreatePointDialog({ categories }: { categories: Category[] }) {
                     checked={acceptedCategories?.includes(c.slug)}
                     onCheckedChange={() => toggleCategory(c.slug)}
                   />
-                  <CategoryIcon slug={c.slug} className="inline size-3.5" /> {c.name_ar}
+                  {categoryEmoji[c.slug] ?? "📦"} {c.name_ar}
                 </label>
               ))}
             </div>

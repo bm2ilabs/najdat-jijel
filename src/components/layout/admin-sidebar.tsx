@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export type NavCounts = Record<string, number>;
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 type GroupColor = "green" | "purple" | "blue" | "emerald" | "amber";
 type NavGroup = { title: string; color: GroupColor; items: NavItem[] };
@@ -104,7 +105,7 @@ export function AdminSidebarNav({
 }: {
   onNavigate?: () => void;
   /** عدد العناصر "قيد الانتظار" لكل مسار — تُعرض كشارة حمراء بجانب الرابط. */
-  counts?: Record<string, number>;
+  counts?: NavCounts;
 }) {
   const pathname = usePathname();
 
@@ -130,7 +131,7 @@ export function AdminSidebarNav({
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     active
-                      ? "bg-algeria-green/10 text-algeria-green"
+                      ? "bg-algeria-green/10 text-algeria-green font-bold"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >

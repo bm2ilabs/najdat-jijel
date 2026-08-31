@@ -11,12 +11,12 @@ type Assessment = Database["public"]["Tables"]["damage_assessments"]["Row"];
 const columns: CsvColumn<Assessment>[] = [
   { header: "الاسم الكامل", value: (r) => r.full_name },
   { header: "الهاتف", value: (r) => r.phone },
-  { header: "الحالة", value: (r) => damageAssessmentStatusLabels[r.status] },
+  { header: "الحالة", value: (r) => damageAssessmentStatusLabels[r.status] ?? r.status },
   { header: "الولاية", value: (r) => r.wilaya },
   { header: "البلدية", value: (r) => r.commune },
   { header: "تقدير الدهان (لتر)", value: (r) => r.estimated_paint_liters ?? "" },
-  { header: "التخصصات المطلوبة", value: (r) => r.required_specialties.join("؛ ") },
-  { header: "تاريخ التسجيل", value: (r) => new Date(r.created_at).toLocaleString("ar-DZ") },
+  { header: "التخصصات المطلوبة", value: (r) => (r.required_specialties ?? []).join("؛ ") },
+  { header: "تاريخ التسجيل", value: (r) => r.created_at ? new Date(r.created_at).toLocaleString("ar-DZ") : "" },
 ];
 
 export function ExportDamageAssessmentsCsvButton({ rows }: { rows: Assessment[] }) {

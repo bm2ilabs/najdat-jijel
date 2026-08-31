@@ -20,7 +20,8 @@ import { PointCard, type PointCardData } from "@/components/shared/point-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { campaignWilayas } from "@/config/site";
 import { WilayaSelect } from "@/components/ui/wilaya-select";
-import { priorityWilayas } from "@/lib/algeria-cities";
+import { CommuneSelect } from "@/components/ui/commune-select";
+import { priorityWilayas, getCommunesByWilaya } from "@/lib/algeria-cities";
 import type { AvailableLocale } from "@/i18n/locales";
 import { cn } from "@/lib/utils";
 
@@ -54,12 +55,23 @@ export function MapClient({
   const [search, setSearch] = useState("");
   const [selectedKind, setSelectedKind] = useState<KindFilter>("all");
   const [selectedWilaya, setSelectedWilaya] = useState<string>("all");
+  const [selectedCommune, setSelectedCommune] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
 
   // View States
   const [viewMode, setViewMode] = useState<"split" | "map" | "grid">("split");
   const [mobileTab, setMobileTab] = useState<"map" | "list">("map");
+
+  const availableCommunes = useMemo(() => {
+    if (selectedWilaya === "all") return [];
+    return getCommunesByWilaya(selectedWilaya);
+  }, [selectedWilaya]);
+
+  const handleWilayaChange = (wilaya: string) => {
+    setSelectedWilaya(wilaya);
+    setSelectedCommune("all");
+  };
 
   // Filter Logic
   const filteredPoints = useMemo(() => {
@@ -71,6 +83,19 @@ export function MapClient({
 
       // Wilaya Filter
       if (selectedWilaya !== "all" && p.wilaya !== selectedWilaya) return false;
+
+      // Commune Filter
+      if (selectedCommune !== "all") {
+        const normCommune = (p.commune || "").trim().toLowerCase();
+        const normSelected = selectedCommune.trim().toLowerCase();
+        if (
+          normCommune !== normSelected &&
+          !normCommune.includes(normSelected) &&
+          !normSelected.includes(normCommune)
+        ) {
+          return false;
+        }
+      }
 
       // Status Filter
       if (selectedStatus !== "all" && p.status !== selectedStatus) return false;
@@ -89,7 +114,7 @@ export function MapClient({
 
       return true;
     });
-  }, [points, search, selectedKind, selectedWilaya, selectedStatus]);
+  }, [points, search, selectedKind, selectedWilaya, selectedCommune, selectedStatus]);
 
   // Dynamic Counts
   const counts = useMemo(() => {
@@ -110,12 +135,14 @@ export function MapClient({
     search.trim() !== "" ||
     selectedKind !== "all" ||
     selectedWilaya !== "all" ||
+    selectedCommune !== "all" ||
     selectedStatus !== "all";
 
   const handleResetFilters = useCallback(() => {
     setSearch("");
     setSelectedKind("all");
     setSelectedWilaya("all");
+    setSelectedCommune("all");
     setSelectedStatus("all");
     setSelectedPointId(null);
   }, []);
@@ -242,15 +269,27 @@ export function MapClient({
             )}
           </div>
 
-          {/* Wilaya Filter Dropdown / Select with All 69 Wilayas */}
+          {/* Wilaya & Commune Filter Dropdowns */}
           <div className="flex flex-wrap items-center gap-2">
             <WilayaSelect
               locale={locale}
               includeAllOption={true}
               value={selectedWilaya}
-              onChange={(e) => setSelectedWilaya(e.target.value)}
+              onChange={(e) => handleWilayaChange(e.target.value)}
               className="w-auto min-w-[170px] cursor-pointer"
             />
+
+            {/* Dynamic Commune Select when Wilaya is selected */}
+            {selectedWilaya !== "all" && (
+              <CommuneSelect
+                wilaya={selectedWilaya}
+                locale={locale}
+                includeAllOption={true}
+                value={selectedCommune}
+                onChange={(e) => setSelectedCommune(e.target.value)}
+                className="w-auto min-w-[170px] cursor-pointer animate-in fade-in"
+              />
+            )}
 
             {/* Status Filter */}
             <select
@@ -284,7 +323,7 @@ export function MapClient({
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <span className="text-xs font-bold text-priority-critical flex items-center gap-1">
             <span className="inline-block size-2 rounded-full bg-priority-critical animate-pulse" />
-            {isFr ? "Zones sinistrées prioritaires :" : "الولايات المتضررة (أولوية الإغاثة) :"}
+            {isFr ? "Zones prioritaires :" : "الولايات المتضررة (أولوية الإغاثة) :"}
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
             {priorityWilayas.map((pw) => {
@@ -293,7 +332,7 @@ export function MapClient({
                 <button
                   key={pw.code}
                   type="button"
-                  onClick={() => setSelectedWilaya(active ? "all" : pw.name_ar)}
+                  onClick={() => handleWilayaChange(active ? "all" : pw.name_ar)}
                   className={cn(
                     "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer border",
                     active
@@ -308,6 +347,46 @@ export function MapClient({
             })}
           </div>
         </div>
+
+        {/* Dynamic Commune Chips Bar when a specific Wilaya is active */}
+        {selectedWilaya !== "all" && availableCommunes.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 animate-in fade-in">
+            <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+              <span>📍</span>
+              <span>{isFr ? "Communes de la wilaya :" : "بلديات الولاية :"}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedCommune("all")}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer border",
+                selectedCommune === "all"
+                  ? "bg-algeria-green text-white border-algeria-green shadow-xs"
+                  : "bg-muted/70 text-foreground border-border hover:bg-muted"
+              )}
+            >
+              {isFr ? "Toutes" : "كل البلديات"}
+            </button>
+            {availableCommunes.slice(0, 18).map((c) => {
+              const active = selectedCommune === c.name_ar;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedCommune(active ? "all" : c.name_ar)}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer border",
+                    active
+                      ? "bg-algeria-green text-white border-algeria-green shadow-xs scale-105"
+                      : "bg-background text-foreground border-border hover:border-algeria-green/50 hover:bg-algeria-green/5"
+                  )}
+                >
+                  <span>{isFr ? c.name_fr : c.name_ar}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* 3. Mobile View Switcher & Result Count */}
         <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">

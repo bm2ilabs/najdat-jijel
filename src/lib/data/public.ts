@@ -106,8 +106,14 @@ export async function getStatDistributionsByCategory() {
 export async function getPublicCollectionPoints() {
   try {
     const supabase = await createClient();
-    const { data } = await supabase.rpc("get_public_collection_points");
-    return data ?? [];
+    const { data, error } = await supabase.rpc("get_public_collection_points");
+    if (!error && data && data.length > 0) return data;
+
+    const { data: tableData } = await supabase
+      .from("collection_points")
+      .select("*")
+      .in("status", ["open", "full", "paused"]);
+    return tableData ?? [];
   } catch {
     return [];
   }
@@ -116,8 +122,14 @@ export async function getPublicCollectionPoints() {
 export async function getPublicReliefHubs() {
   try {
     const supabase = await createClient();
-    const { data } = await supabase.rpc("get_public_relief_hubs");
-    return data ?? [];
+    const { data, error } = await supabase.rpc("get_public_relief_hubs");
+    if (!error && data && data.length > 0) return data;
+
+    const { data: tableData } = await supabase
+      .from("relief_hubs")
+      .select("*")
+      .in("status", ["open", "full", "paused"]);
+    return tableData ?? [];
   } catch {
     return [];
   }
